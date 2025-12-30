@@ -123,7 +123,7 @@ class ProfitReportsController extends Controller
         $purchaseExpensesDetails = $purchaseExpensesQuery->get();
 
         $generalExpensesQuery = Expense::whereBetween('expense_date', [$dateFrom, $dateTo])
-            ->with('safe');
+            ->with('cashbox');
 
         if ($filters['search'] ?? null) {
             $search = $filters['search'];
