@@ -86,6 +86,7 @@
                                     @elseif($transaction->module == 'purchase_invoice') bg-danger
                                     @elseif($transaction->module == 'transfer') bg-warning
                                     @elseif($transaction->module == 'expense') bg-info
+                                    @elseif($transaction->module == 'sales_return') bg-primary
                                     @else bg-secondary
                                     @endif
                                 ">

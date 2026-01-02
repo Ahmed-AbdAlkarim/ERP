@@ -53,79 +53,191 @@
     </div>
 
     <!-- Movements Table -->
-    <div class="card border-0 shadow-sm">
-        <div class="card-header bg-white border-0">
-            <h6 class="mb-0 fw-bold text-primary">حركات المخزون</h6>
+    
+
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white">
+            <h6 class="fw-bold text-success mb-0">وارد المنتج (مشتريات)</h6>
         </div>
-        <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table table-hover mb-0">
-                    <thead class="table-light">
-                        <tr>
-                            <th class="border-0 fw-bold">#</th>
-                            <th class="border-0 fw-bold">التاريخ</th>
-                            <th class="border-0 fw-bold">النوع</th>
-                            <th class="border-0 fw-bold">الكمية</th>
-                            <th class="border-0 fw-bold">قبل</th>
-                            <th class="border-0 fw-bold">بعد</th>
-                            <th class="border-0 fw-bold">سبب التسوية</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse($movements as $index => $m)
-                        <tr class="border-bottom border-light">
-                            <td class="fw-bold text-primary">{{ $movements->firstItem() + $index }}</td>
-                            <td>{{ $m->created_at->format('Y-m-d H:i') }}</td>
-                            <td>
-                                @if($m->type == 'in')
-                                    <span class="badge bg-success rounded-pill px-2 py-1">دخول</span>
-                                @elseif($m->type == 'out')
-                                    <span class="badge bg-danger rounded-pill px-2 py-1">خروج</span>
-                                @elseif($m->type == 'adjustment')
-                                    <span class="badge bg-warning text-dark rounded-pill px-2 py-1">تسوية</span>
-                                @else
-                                    <span class="badge bg-secondary rounded-pill px-2 py-1">{{ $m->type }}</span>
-                                @endif
-                            </td>
-                            <td class="fw-bold">{{ $m->quantity }}</td>
-                            <td>{{ $m->before_qty }}</td>
-                            <td>{{ $m->after_qty }}</td>
-                            <td dir="rtl">
-                                @if($m->type == 'adjustment')
-                                    @if($m->note == 'damaged')
-                                        هالك 
-                                    @elseif($m->note == 'count_error')
-                                        خطأ جرد
-                                    @elseif($m->note == 'manual_correction')
-                                        تصحيح يدوي
-                                    @elseif($m->note == 'other')
-                                        أخرى
-                                    @else
-                                        {{ $m->note ?? '-' }}
-                                    @endif
-                                @else
-                                    -
-                                @endif
-                            </td>
-                        </tr>
-                        @empty
-                        <tr>
-                            <td colspan="8" class="text-center py-4 text-muted">
-                                <i class="fas fa-history fa-2x mb-2"></i>
-                                <br>لا توجد حركات مخزون
-                            </td>
-                        </tr>w
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
+
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>#</th>
+                        <th>التاريخ</th>
+                        <th>المورد</th>
+                        <th>الكمية</th>
+                        <th>سعر الشراء</th>
+                        <th>الإجمالي</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($purchases as $i => $item)
+                    @can('view_purchase_invoice')
+                    <tr
+                        style="cursor: pointer"
+                        onclick="window.location='{{ route('admin.purchase_invoices.show', $item->invoice->id) }}'"
+                    >
+                    @endcan
+
+                        <td>{{ $purchases->firstItem() + $i }}</td>
+                        <td>{{ \Carbon\Carbon::parse($item->invoice->date)->format('d-m-Y') }}</td>
+                        <td>{{ $item->invoice->supplier->name }}</td>
+                        <td>{{ $item->quantity }}</td>
+                        <td>{{ number_format($item->purchase_price,2) }}</td>
+                        <td>{{ number_format($item->total,2) }}</td>
+                    </tr>
+                    @empty
+                    <tr>
+                        <td colspan="6" class="text-center text-muted">لا توجد مشتريات</td>
+                    </tr>
+                    @endforelse
+                </tbody>
+            </table>
         </div>
-        @if($movements->hasPages())
-        <div class="card-footer bg-white border-0">
-            {{ $movements->links() }}
-        </div>
-        @endif
+
+        {{ $purchases->links() }}
     </div>
+
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white">
+            <h6 class="fw-bold text-primary mb-0">صادر المنتج (مبيعات)</h6>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>#</th>
+                        <th>التاريخ</th>
+                        <th>العميل</th>
+                        <th>الكمية</th>
+                        <th>سعر البيع</th>
+                        <th>الإجمالي</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($sales as $i => $item)
+                    @can('view_sales_invoice')
+                    <tr
+                        style="cursor: pointer"
+                        onclick="window.location='{{ route('admin.sales-invoices.show', $item->invoice->id) }}'"
+                    >
+                    @endcan
+                        <td>{{ $sales->firstItem() + $i }}</td>
+                        <td>{{ $item->invoice->invoice_date->format('d-m-Y | h:i A') }}</td>
+                        <td>{{ $item->invoice->customer->name ?? 'نقدي' }}</td>
+                        <td>{{ $item->qty }}</td>
+                        <td>{{ number_format($item->price,2) }}</td>
+                        <td>{{ number_format($item->total,2) }}</td>
+                    </tr>
+                    @empty
+                    <tr>
+                        <td colspan="6" class="text-center text-muted">لا توجد مبيعات</td>
+                    </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+
+        {{ $sales->links() }}
+    </div>
+
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white">
+            <h6 class="fw-bold text-danger mb-0">مرتجعات المنتج</h6>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>#</th>
+                        <th>التاريخ</th>
+                        <th>الكمية</th>
+                        <th>سعر المرتجع</th>
+                        <th>الإجمالي</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($returns as $i => $item)
+                    <tr class="clickable-row" style="cursor: pointer"
+                        onclick="window.location='{{ route('admin.sales_returns.show', $item->salesReturn->id) }}'">
+                        <td>{{ $returns->firstItem() + $i }}</td>
+                        <td>{{ $item->salesReturn->return_date->format('d-m-Y | h:i A') }}</td>
+                        <td>{{ $item->qty }}</td>
+                        <td>{{ number_format($item->return_price,2) }}</td>
+                        <td>{{ number_format($item->total,2) }}</td>
+                    </tr>
+                    @empty
+                    <tr>
+                        <td colspan="5" class="text-center text-muted">
+                            لا توجد مرتجعات
+                        </td>
+                    </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+
+        {{ $returns->links() }}
+    </div>
+
+
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white">
+            <h6 class="fw-bold text-warning mb-0">تسويات المخزون</h6>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>#</th>
+                        <th>التاريخ</th>
+                        <th>الكمية</th>
+                        <th>قبل</th>
+                        <th>بعد</th>
+                        <th>السبب</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($adjustments as $i => $m)
+                    <tr>
+                        <td>{{ $adjustments->firstItem() + $i }}</td>
+                        <td>{{ $m->created_at->format('Y-m-d H:i') }}</td>
+                        <td>{{ $m->quantity }}</td>
+                        <td>{{ $m->before_qty }}</td>
+                        <td>{{ $m->after_qty }}</td>
+                        <td>
+                            @php
+                                $reasons = [
+                                    'count_error' => 'خطأ جرد',
+                                    'damaged' => 'هالك',
+                                    'manual_correction' => 'تصحيح يدوي',
+                                    'other' => 'أخرى',
+                                ];
+                            @endphp
+
+                            {{ $reasons[$m->note] ?? $m->note ?? '-' }}
+                        </td>
+
+                    </tr>
+                    @empty
+                    <tr>
+                        <td colspan="6" class="text-center text-muted">لا توجد تسويات</td>
+                    </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+
+        {{ $adjustments->links() }}
+    </div>
+
+
+
 
 </div>
 

@@ -83,6 +83,9 @@
                                 </td>
                                 <td>
                                     <a href="{{ route('admin.products.show',$p->id) }}" class="btn btn-info btn-sm">عرض</a>
+                                    @can('view_inventory')
+                                    <a href="{{ route('admin.inventory.card',$p->id) }}" class="btn btn-secondary btn-sm">حركة المنتج</a>
+                                    @endcan
                                     @can('edit_product')
                                     <a href="{{ route('admin.products.edit',$p->id) }}" class="btn btn-warning btn-sm">تعديل</a>
                                     @endcan

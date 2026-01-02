@@ -6,10 +6,10 @@
 <div class="container-fluid my-4">
 
     <!-- Page Header -->
-    <div class="mb-4 p-4 rounded shadow text-white"
+    <div class="mb-4 p-4 rounded shadow text-dark"
         style="
             min-height:120px;
-            background: linear-gradient(135deg, #0f766e, #134e4a);
+            background: linear-gradient(135deg, #f0fdfa, #ccfbf1);
         ">
         <div class="d-flex align-items-center">
             <div class="me-3 d-flex align-items-center justify-content-center"
@@ -17,16 +17,16 @@
                     width:60px;
                     height:60px;
                     border-radius:16px;
-                    background: rgba(255,255,255,0.18);
+                    background: rgba(0,0,0,0.1);
                     font-size:26px;
                 ">
                 <i class="fas fa-tachometer-alt"></i>
             </div>
 
             <div>
-                <h1 class="h3 mb-1 fw-bold" style="color:#ffffff;">
+                <h1 class="h3 mb-1 fw-bold">
                     لوحة التحكم
-                </h1>   
+                </h1>
                 <p class="mb-0 opacity-75">نظرة عامة على أداء المبيعات والمخزون</p>
             </div>
         </div>
@@ -38,9 +38,9 @@
 
         <!-- Sales -->
         <div class="col-xl-3 col-md-6 col-12">
-            <div class="card border-0 shadow h-100 text-white"
+            <div class="card border-0 shadow h-100 text-dark"
                  style="min-height:140px;
-                 background: linear-gradient(135deg, #1e3c72, #2a5298);">
+                 background: linear-gradient(135deg, #e0f2fe, #bae6fd);">
                 <div class="card-body d-flex align-items-center">
                     <i class="fas fa-dollar-sign fa-2x me-3 opacity-75"></i>
                     <div>
@@ -55,9 +55,9 @@
         <!-- Profit -->
         <div class="col-xl-3 col-md-6 col-12">
             <a href="{{ route('admin.profit-reports.index') }}" class="text-decoration-none">
-                <div class="card border-0 shadow h-100 text-white"
+                <div class="card border-0 shadow h-100 text-dark"
                      style="min-height:140px;
-                     background: linear-gradient(135deg, #11998e, #38ef7d);">
+                     background: linear-gradient(135deg, #dcfce7, #bbf7d0);">
                     <div class="card-body d-flex align-items-center">
                         <i class="fas fa-money-bill-wave fa-2x me-3 opacity-75"></i>
                         <div>
@@ -72,9 +72,9 @@
 
         <!-- Invoices -->
         <div class="col-xl-3 col-md-6 col-12">
-            <div class="card border-0 shadow h-100 text-white"
+            <div class="card border-0 shadow h-100 text-dark"
                  style="min-height:140px;
-                 background: linear-gradient(135deg, #7f00ff, #e100ff);">
+                 background: linear-gradient(135deg, #f3e8ff, #e9d5ff);">
                 <div class="card-body d-flex align-items-center">
                     <i class="fas fa-file-invoice-dollar fa-2x me-3 opacity-75"></i>
                     <div>
@@ -88,9 +88,9 @@
 
         <!-- Stock Alerts -->
         <div class="col-xl-3 col-md-6 col-12">
-            <div class="card border-0 shadow h-100 text-white"
+            <div class="card border-0 shadow h-100 text-dark"
                  style="min-height:140px;
-                 background: linear-gradient(135deg, #cb2d3e, #ef473a);">
+                 background: linear-gradient(135deg, #fef2f2, #fecaca);">
                 <div class="card-body d-flex align-items-center">
                     <i class="fas fa-exclamation-triangle fa-2x me-3 opacity-75"></i>
                     <div>
@@ -170,7 +170,7 @@
                                 @switch($invoice->status)
                                     @case('paid') <span class="badge bg-success">مدفوع</span> @break
                                     @case('partial') <span class="badge bg-warning text-white">دفع جزئي</span> @break
-                                    @case('pending') <span class="badge bg-danger">آجل</span> @break
+                                    @case('installment') <span class="badge bg-danger">آجل</span> @break
                                     @default <span class="badge bg-secondary">غير محدد</span>
                                 @endswitch
                             </td>

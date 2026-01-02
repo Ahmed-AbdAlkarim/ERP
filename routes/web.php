@@ -17,6 +17,7 @@ use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\PermissionController;
 use App\Http\Controllers\Admin\StockExcelController;
+use App\Http\Controllers\Admin\SalesReturnController;
 
 use App\Livewire\Actions\Logout;
 
@@ -249,6 +250,22 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
         Route::delete('sales-invoices/{invoice}', [SalesInvoiceController::class, 'destroy'])
             ->name('sales-invoices.destroy');
     });
+
+    /* ==========================
+     | مرتجعات المبيعات
+     ========================= */
+        Route::get('sales_returns', [SalesReturnController::class, 'index'])
+            ->name('sales_returns.index');
+
+        Route::get('sales_returns/create', [SalesReturnController::class, 'create'])
+            ->name('sales_returns.create');
+
+        Route::post('sales_returns', [SalesReturnController::class, 'store'])
+            ->name('sales_returns.store');
+
+        Route::get('sales_returns/{id}', [SalesReturnController::class, 'show'])
+            ->name('sales_returns.show');
+  
 
 
     /* =========================

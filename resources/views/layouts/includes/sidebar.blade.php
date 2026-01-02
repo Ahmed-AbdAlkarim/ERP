@@ -84,6 +84,16 @@
     </li>
     @endcan
 
+
+    <!-- Sales Returns -->
+    <li class="menu-item {{ request()->is('admin/sales_returns*') ? 'active' : '' }}">
+      <a href="{{ route('admin.sales_returns.index') }}" class="menu-link">
+        <i class="menu-icon tf-icons ti ti-refresh"></i>
+
+        <div>مرتجعات البيع</div>
+      </a>
+    </li>
+
     @can('view_maintenances')
     <!-- Maintenance Requests -->
     <li class="menu-item {{ request()->is('admin/maintenances*') ? 'active' : '' }}">

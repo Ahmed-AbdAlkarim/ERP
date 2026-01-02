@@ -136,6 +136,12 @@ function handleProductSelect() {
 $(document).ready(function() {
     $('.product_select').select2().on('select2:select', handleProductSelect);
     $('.cashbox_select').select2();
+
+    // Add event listener for qty changes on existing rows
+    $('.qty').on('input', function() {
+        updateRow($(this).closest('tr')[0]);
+        updateTotals();
+    });
 });
 
 function updateRow(row){
@@ -163,6 +169,11 @@ document.getElementById('add_row').addEventListener('click',()=>{
     // Initialize Select2 on the new product select
     clone.querySelector('.product_select').classList.remove('select2-hidden-accessible');
     $(clone.querySelector('.product_select')).select2().on('select2:select', handleProductSelect);
+    // Add event listener for qty changes on the new row
+    $(clone.querySelector('.qty')).on('input', function() {
+        updateRow($(this).closest('tr')[0]);
+        updateTotals();
+    });
 });
 document.getElementById('items_body').addEventListener('click',e=>{
     if(e.target.classList.contains('remove_row')){

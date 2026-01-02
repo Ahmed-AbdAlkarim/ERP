@@ -53,9 +53,43 @@ class InventoryController extends Controller
     public function card($productId)
     {
         $product = Product::findOrFail($productId);
-        $movements = $product->stockMovements()->orderBy('created_at', 'desc')->paginate(25);
-        return view('admin.inventory.card', compact('product','movements'));
+
+        // 1️⃣ تسويات المخزون
+        $adjustments = $product->stockMovements()
+            ->where(function ($q) {
+                $q->where('type', 'adjustment')
+                ->orWhere('type', '');
+            })
+            ->orderBy('created_at', 'desc')
+            ->paginate(10, ['*'], 'adjustments_page');
+
+
+        // 2️⃣ وارد المنتج (مشتريات)
+        $purchases = \App\Models\PurchaseInvoiceItem::with(['invoice.supplier'])
+            ->where('product_id', $productId)
+            ->orderBy('created_at', 'desc')
+            ->paginate(10, ['*'], 'purchases_page');
+
+        // 3️⃣ صادر المنتج (مبيعات)
+        $sales = \App\Models\SalesInvoiceItem::with(['invoice.customer'])
+            ->where('product_id', $productId)
+            ->orderBy('created_at', 'desc')
+            ->paginate(10, ['*'], 'sales_page');
+
+        // 4️⃣ مرتجعات المنتج ✅ (ده 1.1)
+        $returns = \App\Models\SalesReturnItem::with('salesReturn')
+            ->where('product_id', $productId)
+            ->orderBy('created_at', 'desc')
+            ->paginate(10, ['*'], 'returns_page');
+
+        return view(
+            'admin.inventory.card',
+            compact('product', 'adjustments', 'purchases', 'sales', 'returns')
+        );
     }
+
+
+
 
   
     public function showAdjustForm($productId)

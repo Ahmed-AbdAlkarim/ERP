@@ -18,7 +18,7 @@ class DashboardController extends Controller
         $todaySales = SalesInvoice::whereDate('invoice_date', today())->sum('total');
 
         // صافي الربح: مجموع أرباح الفواتير اليومية (فقط إذا كان المستخدم لديه صلاحية عرض الربح)
-        $netProfit = auth()->user()->can('view_profit') ?
+        $netProfit = auth()->user()->can('view_profits') ?
             SalesInvoice::whereDate('invoice_date', today())->sum('profit') : null;
 
 

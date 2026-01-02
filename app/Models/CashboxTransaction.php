@@ -39,6 +39,7 @@ class CashboxTransaction extends Model
                 'expense' => 'مصروف',
                 'initial_balance' => 'رصيد افتتاحي',
                 'maintenance_collection' => 'تحصيل صيانة',
+                'sales_return' => 'مرتجع بيع',
                 default => 'غير معروف',
             }
         );

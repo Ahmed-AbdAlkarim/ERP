@@ -135,12 +135,14 @@ class Product extends Model
     public function adjustStock(int $actualQty, ?string $reason = null, $userId = null)
     {
         DB::transaction(function () use ($actualQty, $reason, $userId) {
+
+            DB::statement("SET SESSION sql_mode = ''");
+
             $prod = self::where('id', $this->id)->lockForUpdate()->first();
 
             $systemQty = (int)$prod->stock;
             $difference = $actualQty - $systemQty;
 
-            // سجل التسوية
             StockAdjustment::create([
                 'product_id' => $prod->id,
                 'system_qty' => $systemQty,
@@ -153,10 +155,8 @@ class Product extends Model
                 'approved_at' => now(),
             ]);
 
-            // حدث الكمية
             $prod->update(['stock' => $actualQty]);
 
-            // سجل الحركة
             StockMovement::create([
                 'product_id' => $prod->id,
                 'type'       => 'adjustment',
@@ -168,6 +168,7 @@ class Product extends Model
         });
     }
 
+    
     // App\Models\Product.php
     public function applyApprovedAdjustment(StockAdjustment $adj)
     {

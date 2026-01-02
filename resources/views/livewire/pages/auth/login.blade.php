@@ -61,9 +61,12 @@ $login = function () {
                 </a>
             @endif
 
-            <x-primary-button class="ms-3">
-                {{ __('Log in') }}
+            <x-primary-button class="ms-3"
+                wire:loading.attr="disabled">
+                <span wire:loading.remove>Log in</span>
+                <span wire:loading>جاري الدخول...</span>
             </x-primary-button>
+
         </div>
     </form>
 </div>
