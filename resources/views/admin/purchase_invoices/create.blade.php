@@ -91,12 +91,8 @@
                     <tbody>
                         <tr>
                             <td>
-                                <select name="items[0][product_id]" class="form-control" required>
-                                    <option disabled selected>اختر الصنف</option>
-                                    @foreach($products as $product)
-                                        <option value="{{ $product->id }}">{{ $product->name }}</option>
-                                    @endforeach
-                                </select>
+                                <input type="text" name="items[0][product_name]" list="products" class="form-control" placeholder="ابحث هنا" required onchange="updateProductId(this, 0)" oninput="updateProductId(this, 0)" onblur="updateProductId(this, 0)">
+                                <input type="hidden" name="items[0][product_id]" id="product_id_0">
                             </td>
                             <td>
                                 <input type="number" name="items[0][quantity]" class="form-control quantity" value="1" min="1">
@@ -136,13 +132,39 @@
                 </button>
 
             </form>
+
         </div>
+
     </div>
+
 </div>
+
+<datalist id="products">
+@foreach($products as $product)
+<option value="{{ $product->name }}" data-id="{{ $product->id }}">
+@endforeach
+</datalist>
 
 {{-- ================= JS ================= --}}
 <script>
 document.addEventListener("DOMContentLoaded", function () {
+
+    window.updateProductId = function (input, index) {
+        const selectedValue = input.value.trim();
+        const datalist = document.getElementById('products');
+        const options = datalist.querySelectorAll('option');
+        let productId = '';
+
+        for (let option of options) {
+            if (option.value.trim() === selectedValue) {
+                productId = option.getAttribute('data-id');
+                break;
+            }
+        }
+
+        document.getElementById(`product_id_${index}`).value = productId;
+    }
+
 
     /* ================= الأصناف ================= */
     let rowIndex = 1;
@@ -170,12 +192,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
         tr.innerHTML = `
             <td>
-                <select name="items[${rowIndex}][product_id]" class="form-control" required>
-                    <option disabled selected>اختر الصنف</option>
-                    @foreach($products as $product)
-                        <option value="{{ $product->id }}">{{ $product->name }}</option>
-                    @endforeach
-                </select>
+                <input type="text" name="items[${rowIndex}][product_name]" list="products" class="form-control" placeholder="ابحث هنا" required onchange="updateProductId(this, ${rowIndex})" oninput="updateProductId(this, ${rowIndex})" onblur="updateProductId(this, ${rowIndex})">
+                <input type="hidden" name="items[${rowIndex}][product_id]" id="product_id_${rowIndex}">
             </td>
             <td><input type="number" name="items[${rowIndex}][quantity]" class="form-control quantity" value="1"></td>
             <td><input type="number" name="items[${rowIndex}][purchase_price]" class="form-control price" value="0"></td>
@@ -279,6 +297,19 @@ document.addEventListener("DOMContentLoaded", function () {
 
     paymentStatus.dispatchEvent(new Event('change'));
     calculateTotal();
+
+    // Form validation before submit
+    document.querySelector('form').addEventListener('submit', function(e) {
+        const rows = document.querySelectorAll('#itemsTable tbody tr');
+        for (let i = 0; i < rows.length; i++) {
+            const productId = document.getElementById(`product_id_${i}`).value;
+            if (!productId) {
+                alert('يرجى اختيار صنف صحيح في الصف ' + (i + 1));
+                e.preventDefault();
+                return false;
+            }
+        }
+    });
 });
 </script>
 @endsection

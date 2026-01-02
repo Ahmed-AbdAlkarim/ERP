@@ -80,16 +80,8 @@
             <tbody id="items_body">
                 <tr>
                     <td>
-                        <select name="items[0][product_id]" class="form-control product_select" required>
-                            <option value="">اختــر...</option>
-                            @foreach ($products as $product)
-                                <option value="{{ $product->id }}" 
-                                        data-price="{{ $product->selling_price }}" 
-                                        data-min-price="{{ $product->min_allowed_price }}">
-                                    {{ $product->name }}
-                                </option>
-                            @endforeach
-                        </select>
+                        <input type="text" name="items[0][product_name]" list="products" class="form-control" placeholder="ابحث هنا" required onchange="updateProductId(this, 0)" oninput="updateProductId(this, 0)" onblur="updateProductId(this, 0)">
+                        <input type="hidden" name="items[0][product_id]" id="product_id_0">
                     </td>
                     <td><input type="number" name="items[0][qty]" class="form-control qty" min="1" value="1" required></td>
                     <td><input type="number" name="items[0][price]" class="form-control price" step="0.01" required readonly></td>
@@ -123,18 +115,40 @@
     </form>
 </div>
 
-<script>
-function handleProductSelect() {
-    let row = $(this).closest('tr');
-    let selectedOption = $(this).find('option:selected');
-    row.find('.price').val(selectedOption.attr('data-price'));
-    row.find('.min_price').val(selectedOption.attr('data-min-price'));
-    updateRow(row[0]);
-    updateTotals();
-}
+<datalist id="products">
+@foreach($products as $product)
+<option value="{{ $product->name }}" data-id="{{ $product->id }}" data-price="{{ $product->selling_price }}" data-min-price="{{ $product->min_allowed_price }}">
+@endforeach
+</datalist>
 
-$(document).ready(function() {
-    $('.product_select').select2().on('select2:select', handleProductSelect);
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    window.updateProductId = function (input, index) {
+        const selectedValue = input.value.trim();
+        const datalist = document.getElementById('products');
+        const options = datalist.querySelectorAll('option');
+        let productId = '';
+        let price = '';
+        let minPrice = '';
+
+        for (let option of options) {
+            if (option.value.trim() === selectedValue) {
+                productId = option.getAttribute('data-id');
+                price = option.getAttribute('data-price');
+                minPrice = option.getAttribute('data-min-price');
+                break;
+            }
+        }
+
+        document.getElementById(`product_id_${index}`).value = productId;
+        const row = input.closest('tr');
+        row.querySelector('.price').value = price;
+        row.querySelector('.min_price').value = minPrice;
+        updateRow(row);
+        updateTotals();
+    }
+
     $('.cashbox_select').select2();
 
     // Add event listener for qty changes on existing rows
@@ -261,5 +275,18 @@ document.getElementById('items_body').addEventListener('click',e=>{
 
     paymentStatus.dispatchEvent(new Event('change'));
     updateTotals();
+
+    // Form validation before submit
+    document.querySelector('form').addEventListener('submit', function(e) {
+        const rows = document.querySelectorAll('#items_body tr');
+        for (let i = 0; i < rows.length; i++) {
+            const productId = document.getElementById(`product_id_${i}`).value;
+            if (!productId) {
+                alert('يرجى اختيار صنف صحيح في الصف ' + (i + 1));
+                e.preventDefault();
+                return false;
+            }
+        }
+    });
 </script>
 @endsection
