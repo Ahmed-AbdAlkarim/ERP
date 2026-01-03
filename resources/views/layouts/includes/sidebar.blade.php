@@ -25,15 +25,12 @@
     <li class="menu-item {{ request()->routeIs('dashboard') ? 'active open' : '' }}">
       <a href="{{ route('dashboard') }}" class="menu-link">
         <i class="menu-icon tf-icons ti ti-home"></i>
-        <div>لوحة التحكم</div>
+        <div>الرئيسية</div>
       </a>
     </li>
     @endcan
 
-    <!-- Apps Header -->
-    <li class="menu-header small text-uppercase">
-      <span class="menu-header-text">التطبيقات</span>
-    </li>
+    
     @can('view_products')
     <!-- Products -->
     <li class="menu-item {{ request()->is('admin/products*') ? 'active' : '' }}">
@@ -84,15 +81,15 @@
     </li>
     @endcan
 
-
+    @can('view_sales_returns')
     <!-- Sales Returns -->
     <li class="menu-item {{ request()->is('admin/sales_returns*') ? 'active' : '' }}">
       <a href="{{ route('admin.sales_returns.index') }}" class="menu-link">
         <i class="menu-icon tf-icons ti ti-refresh"></i>
-
         <div>مرتجعات البيع</div>
       </a>
     </li>
+    @endcan
 
     @can('view_maintenances')
     <!-- Maintenance Requests -->

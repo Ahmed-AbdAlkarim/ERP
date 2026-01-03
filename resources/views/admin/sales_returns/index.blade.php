@@ -7,9 +7,11 @@
 
     <div class="d-flex justify-content-between mb-4">
         <h4 class="text-primary">مرتجعات البيع</h4>
+        @can('create_sales_returns')
         <a href="{{ route('admin.sales_returns.create') }}" class="btn btn-primary">
             + إضافة مرتجع
         </a>
+        @endcan
     </div>
 
     <div class="card shadow-sm">

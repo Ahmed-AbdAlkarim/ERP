@@ -25,6 +25,8 @@
                 <select name="type" class="form-select rounded-3 shadow-sm">
                     <option value="laptop">لابتوب</option>
                     <option value="mobile">موبايل</option>
+                    <option value="security_camera">كاميرا مراقبة</option>
+                    <option value="photo_camera">كاميرا تصوير</option>
                     <option value="accessory">إكسسوار</option>
                     <option value="spare">قطعة غيار</option>
                     <option value="service">خدمة</option>

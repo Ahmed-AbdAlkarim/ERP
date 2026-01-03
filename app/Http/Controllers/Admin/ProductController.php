@@ -39,7 +39,7 @@ class ProductController extends Controller
     {
         $data = $r->validate([
             'name'=>'required|string|max:255',
-            'type'=>['required',Rule::in(['laptop','mobile','accessory','spare','service'])],
+            'type'=>['required',Rule::in(['laptop','mobile','accessory','spare','service','security_camera','photo_camera'])],
             'model'=>'nullable|string|max:255',
             'sku'=>'nullable|string|unique:products,sku', 
             'purchase_price'=>'required|numeric|min:0',
@@ -81,7 +81,7 @@ class ProductController extends Controller
     {
         $data = $r->validate([
             'name'=>'required|string|max:255',
-            'type'=>['required',Rule::in(['laptop','mobile','accessory','spare','service'])],
+            'type'=>['required',Rule::in(['laptop','mobile','accessory','spare','service','security_camera','photo_camera'])],
             'model'=>'nullable|string|max:255',
             'sku'=>['nullable','string', Rule::unique('products','sku')->ignore($product->id)],
             'purchase_price'=>'required|numeric|min:0',

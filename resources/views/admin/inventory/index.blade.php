@@ -19,10 +19,13 @@
             <a href="{{ route('admin.inventory.adjusted') }}" class="btn btn-success rounded-pill px-4">
                 <i class="bx bx-check me-1"></i>المنتجات المسوية
             </a>
-            <a href="{{ route('admin.inventory.export.excel') }}"
-   class="btn btn-secondary rounded-pill px-4 ms-2">
-    <i class="bx bx-download me-1"></i>تصدير جرد إكسل
-</a>
+            <button type="button"
+                class="btn btn-secondary rounded-pill px-4 ms-2"
+                data-bs-toggle="modal"
+                data-bs-target="#exportInventoryModal">
+                <i class="bx bx-download me-1"></i>تصدير جرد إكسل
+            </button>
+
 
             <a href="{{ route('admin.inventory.excel.pending') }}" class="btn btn-info rounded-pill px-4 ms-2">
                 <i class="bx bx-upload me-1"></i>استيراد جرد من إكسل
@@ -122,6 +125,49 @@
     </div>
 
 </div>
+
+
+<div class="modal fade" id="exportInventoryModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+
+        <div class="modal-content">
+            <form method="GET" action="{{ route('admin.inventory.export.excel') }}">
+
+                <div class="modal-header">
+                    <h5 class="modal-title">تصدير جرد المخزون</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body text-center">
+                    <label class="form-label fw-bold mb-3">اختار نوع المنتجات</label>
+                    <select name="type" class="form-select">
+                        <option value="">كل المنتجات</option>
+                        <option value="mobile">موبايلات</option>
+                        <option value="laptop">لاب توب</option>
+                        <option value="security_camera">كاميرات مراقبة</option>
+                        <option value="photo_camera">كاميرات تصوير</option>
+                        <option value="accessory">إكسسوارات</option>
+                        <option value="spare">قطع غيار</option>
+                        <option value="service">خدمات</option>
+                    </select>
+                </div>
+
+                <div class="modal-footer justify-content-center">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        إلغاء
+                    </button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="bx bx-download me-1"></i>تحميل الإكسل
+                    </button>
+                </div>
+
+            </form>
+        </div>
+
+    </div>
+</div>
+
+
 
 <!-- jQuery -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>

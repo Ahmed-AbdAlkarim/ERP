@@ -71,7 +71,17 @@
                                     @endif
                                 </td>
                                 <td>{{ $p->name }}</td>
-                                <td>{{ $p->type }}</td>
+                                <td>
+                                    @switch($p->type)
+                                        @case('laptop') لابتوب @break
+                                        @case('mobile') موبايل @break
+                                        @case('security_camera') كاميرا مراقبة @break
+                                        @case('photo_camera') كاميرا تصوير @break
+                                        @case('accessory') إكسسوار @break
+                                        @case('spare') قطعة غيار @break
+                                        @case('service') خدمة @break
+                                    @endswitch
+                                </td>
                                 <td>{{ number_format($p->selling_price,2) }} ج.م</td>
                                 <td>{{ $p->stock }}</td>
                                 <td>

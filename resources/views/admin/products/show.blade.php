@@ -30,6 +30,8 @@
                 @switch($product->type)
                     @case('laptop') لابتوب @break
                     @case('mobile') موبايل @break
+                    @case('security_camera') كاميرا مراقبة @break
+                    @case('photo_camera') كاميرا تصوير @break
                     @case('accessory') إكسسوار @break
                     @case('spare') قطعة غيار @break
                     @case('service') خدمة @break

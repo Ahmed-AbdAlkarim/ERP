@@ -8,13 +8,22 @@ use Maatwebsite\Excel\Concerns\WithHeadings;
 
 class InventoryStockExport implements FromCollection, WithHeadings
 {
+    protected $type;
+
+    public function __construct($type = null)
+    {
+        $this->type = $type;
+    }
+
     public function collection()
     {
-        return Product::select(
-            'sku',
-            'name',
-            'stock'
-        )->orderBy('name')->get();
+        $query = Product::select('sku', 'name', 'stock');
+
+        if (!empty($this->type)) {
+            $query->where('type', $this->type);
+        }
+
+        return $query->orderBy('name')->get();
     }
 
     public function headings(): array
@@ -22,7 +31,7 @@ class InventoryStockExport implements FromCollection, WithHeadings
         return [
             'SKU',
             'اسم المنتج',
-            'الكمية في النظام'
+            'الكمية بالمخزون',
         ];
     }
 }

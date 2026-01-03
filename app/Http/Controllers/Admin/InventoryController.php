@@ -98,13 +98,16 @@ class InventoryController extends Controller
         return view('admin.inventory.adjust', compact('product'));
     }
 
-    public function exportInventoryExcel()
+    public function exportInventoryExcel(Request $request)
     {
+        $type = $request->get('type'); // ممكن null
+
         return Excel::download(
-            new InventoryStockExport(),
-            'inventory_stock_' . now()->format('Y-m-d') . '.xlsx'
+            new InventoryStockExport($type),
+            'inventory_stock_' . ($type ?? 'all') . '_' . now()->format('Y-m-d') . '.xlsx'
         );
     }
+
 
 
     

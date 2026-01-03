@@ -34,6 +34,8 @@
                 <select name="type" class="form-select">
                     <option value="laptop" {{ old('type', $product->type) == 'laptop' ? 'selected' : '' }}>لابتوب</option>
                     <option value="mobile" {{ old('type', $product->type) == 'mobile' ? 'selected' : '' }}>موبايل</option>
+                    <option value="security_camera" {{ old('type', $product->type) == 'security_camera' ? 'selected' : '' }}>كاميرا مراقبة</option>
+                    <option value="photo_camera" {{ old('type', $product->type) == 'photo_camera' ? 'selected' : '' }}>كاميرا تصوير</option>
                     <option value="accessory" {{ old('type', $product->type) == 'accessory' ? 'selected' : '' }}>إكسسوار</option>
                     <option value="spare" {{ old('type', $product->type) == 'spare' ? 'selected' : '' }}>قطعة غيار</option>
                     <option value="service" {{ old('type', $product->type) == 'service' ? 'selected' : '' }}>خدمة</option>
