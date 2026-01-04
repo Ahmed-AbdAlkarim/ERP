@@ -361,6 +361,10 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
         Route::get('maintenances/{maintenance}', [App\Http\Controllers\Admin\MaintenanceController::class, 'show'])
             ->middleware('permission:show_maintenance_details')
             ->name('maintenances.show');
+
+        Route::post('maintenances/{maintenance}/print', [App\Http\Controllers\Admin\MaintenanceController::class, 'print'])
+            ->middleware('permission:show_maintenance_details')
+            ->name('maintenances.print');
     });
 
 

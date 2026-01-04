@@ -50,6 +50,9 @@
                         <dt class="col-sm-3">العميل:</dt>
                         <dd class="col-sm-9">{{ $maintenance->customer->name ?? 'غير محدد' }}</dd>
 
+                        <dt class="col-sm-3">رقم العميل:</dt>
+                        <dd class="col-sm-9">{{ $maintenance->customer->phone ?? 'غير محدد' }}</dd>
+
                         <dt class="col-sm-3">نوع الجهاز:</dt>
                         <dd class="col-sm-9">{{ $maintenance->device_type }}</dd>
 
@@ -110,6 +113,15 @@
                 </div>
                 <div class="card-body">
                     <div class="d-grid gap-2">
+                        @can('show_maintenance_details')
+                        <form action="{{ route('admin.maintenances.print', $maintenance->id) }}" method="POST" target="_blank" class="d-inline-block w-100">
+                            @csrf
+                            <button class="btn btn-info w-100" type="submit">
+                                <i class="fas fa-print me-2"></i>طباعة
+                            </button>
+                        </form>
+                        @endcan
+
                         @can('edit_maintenance')
                         <a href="{{ route('admin.maintenances.edit', $maintenance->id) }}" class="btn btn-warning">
                             <i class="fas fa-edit me-2"></i>تعديل الصيانة

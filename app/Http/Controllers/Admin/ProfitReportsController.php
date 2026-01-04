@@ -150,7 +150,8 @@ class ProfitReportsController extends Controller
 
         $salesQuery = SalesInvoice::whereBetween('invoice_date', [$dateFrom, $dateTo])
             ->where('profit', '>', 0)
-            ->with('customer', 'user');
+            ->with('customer', 'user')
+            ->orderBy('invoice_date', 'desc');
 
         if ($filters['search'] ?? null) {
             $search = $filters['search'];

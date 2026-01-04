@@ -3,6 +3,7 @@
 @section('title', 'الخزن')
 
 @section('content')
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <div class="container-fluid my-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
@@ -208,11 +209,8 @@
                 <div class="modal-body">
                     <div class="mb-3">
                         <label>العميل</label>
-                        <select name="customer_id" class="form-control" required>
-                            @foreach(\App\Models\Customer::all() as $customer)
-                                <option value="{{ $customer->id }}">{{ $customer->name }}</option>
-                            @endforeach
-                        </select>
+                        <input type="text" list="customers" class="form-control customer-name" placeholder="ابحث هنا" required>
+                        <input type="hidden" name="customer_id" class="customer-id">
                     </div>
 
                     <div class="mb-3">
@@ -243,5 +241,46 @@
         </form>
     </div>
 </div>
+
+{{-- العملاء --}}
+<datalist id="customers">
+@foreach(\App\Models\Customer::all() as $customer)
+    <option
+        value="{{ $customer->name }}"
+        data-id="{{ $customer->id }}"
+        data-balance="{{ $customer->balance }}"
+        data-phone="{{ $customer->phone }}">
+    </option>
+@endforeach
+</datalist>
+
+<script>
+/* ================= العميل ================= */
+$(document).on('input', '.customer-name', function () {
+    let val = $(this).val();
+    let option = $('#customers option').filter(function () {
+        return this.value === val;
+    }).first();
+
+    if (option.length > 0) {
+        // Matched name
+        $(this).closest('.mb-3').find('.customer-id').val(option.data('id') || '');
+    } else {
+        // Check if it's a phone
+        let phoneOption = $('#customers option').filter(function () {
+            return $(this).data('phone') === val;
+        }).first();
+
+        if (phoneOption.length > 0) {
+            // Found by phone, set to name
+            $(this).val(phoneOption.val());
+            $(this).closest('.mb-3').find('.customer-id').val(phoneOption.data('id') || '');
+        } else {
+            // No match, clear
+            $(this).closest('.mb-3').find('.customer-id').val('');
+        }
+    }
+});
+</script>
 
 @endsection

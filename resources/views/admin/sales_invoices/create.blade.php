@@ -30,17 +30,12 @@
         <div class="row mb-3">
             <div class="col-md-4">
                 <label>العميل</label>
-                <select name="customer_id" id="customer_select" class="form-control">
-                    <option value="">اختــر...</option>
-                    @foreach ($customers as $customer)
-                        <option
-                            value="{{ $customer->id }}"
-                            data-balance="{{ $customer->balance }}"
-                        >
-                            {{ $customer->name }}
-                        </option>
-                    @endforeach
-                </select>
+                <input type="text"
+                       list="customers"
+                       class="form-control customer-name"
+                       placeholder="ابحث هنا"
+                       required>
+                <input type="hidden" name="customer_id" class="customer-id">
 
                 <div class="mt-2">
                     <label>رصيد العميل</label>
@@ -58,7 +53,7 @@
                 <select name="payment_status" id="payment_status" class="form-control" required>
                     <option value="paid">مدفوع</option>
                     <option value="partial">دفع جزئي</option>
-                    <option value="due" selected>آجل</option>
+                    <option value="installment" selected>آجل</option>
                 </select>
             </div>
         </div>
@@ -89,6 +84,7 @@
                     <th style="width:25%">الصنف</th>
                     <th>الكمية</th>
                     <th>السعر</th>
+                    <th>اقل سعر بيع</th>
                     <th>الإجمالي</th>
                     <th></th>
                 </tr>
@@ -107,7 +103,10 @@
                         <input type="number" name="items[0][qty]" class="form-control qty" min="1" value="1">
                     </td>
                     <td>
-                        <input type="number" name="items[0][price]" class="form-control price" readonly>
+                        <input type="number" name="items[0][price]" class="form-control price" step="0.01" min="0">
+                    </td>
+                    <td>
+                        <input type="number" name="items[0][min_allowed_price]" class="form-control min_allowed_price" readonly>
                     </td>
                     <td>
                         <input type="number" class="form-control total" readonly>
@@ -128,8 +127,16 @@
         {{-- الإجماليات --}}
         <div class="row">
             <div class="col-md-4">
+                <label>الإجمالي الفرعي</label>
+                <input type="number" id="subtotal" class="form-control" readonly>
+            </div>
+            <div class="col-md-4">
+                <label>الخصم</label>
+                <input type="number" id="discount" name="discount" class="form-control" step="0.01" min="0" value="0">
+            </div>
+            <div class="col-md-4">
                 <label>الإجمالي</label>
-                <input type="number" id="total_invoice" class="form-control" readonly>
+                <input type="number" id="total_invoice" name="total" class="form-control" readonly>
             </div>
         </div>
 
@@ -145,16 +152,57 @@
     <option
         value="{{ $product->name }}"
         data-id="{{ $product->id }}"
-        data-price="{{ $product->selling_price }}">
+        data-price="{{ $product->selling_price }}"
+        data-min-allowed-price="{{ $product->min_allowed_price }}">
     </option>
 @endforeach
 </datalist>
 
+{{-- العملاء --}}
+<datalist id="customers">
+@foreach($customers as $customer)
+    <option
+        value="{{ $customer->name }}"
+        data-id="{{ $customer->id }}"
+        data-balance="{{ $customer->balance }}"
+        data-phone="{{ $customer->phone }}">
+    </option>
+@endforeach
+</datalist>
+
+
+
 <script>
 /* ================= العميل ================= */
-$('#customer_select').on('change', function () {
-    let balance = $('option:selected', this).data('balance') || 0;
-    $('#customer_balance').val(parseFloat(balance).toFixed(2));
+$(document).on('input', '.customer-name', function () {
+    let val = $(this).val();
+    let option = $('#customers option').filter(function () {
+        return this.value === val;
+    }).first();
+
+    if (option.length > 0) {
+        // Matched name
+        $(this).closest('.col-md-4').find('.customer-id').val(option.data('id') || '');
+        let balance = option.data('balance') || 0;
+        $('#customer_balance').val(parseFloat(balance).toFixed(2));
+    } else {
+        // Check if it's a phone
+        let phoneOption = $('#customers option').filter(function () {
+            return $(this).data('phone') === val;
+        }).first();
+
+        if (phoneOption.length > 0) {
+            // Found by phone, set to name
+            $(this).val(phoneOption.val());
+            $(this).closest('.col-md-4').find('.customer-id').val(phoneOption.data('id') || '');
+            let balance = phoneOption.data('balance') || 0;
+            $('#customer_balance').val(parseFloat(balance).toFixed(2));
+        } else {
+            // No match, clear
+            $(this).closest('.col-md-4').find('.customer-id').val('');
+            $('#customer_balance').val('0.00');
+        }
+    }
 });
 
 /* ================= الأصناف ================= */
@@ -166,12 +214,17 @@ function updateRow(row) {
 }
 
 function updateTotals() {
-    let total = 0;
+    let subtotal = 0;
     $('#items_body .total').each(function () {
-        total += parseFloat($(this).val()) || 0;
+        subtotal += parseFloat($(this).val()) || 0;
     });
+    $('#subtotal').val(subtotal.toFixed(2));
+    let discount = parseFloat($('#discount').val()) || 0;
+    let total = subtotal - discount;
     $('#total_invoice').val(total.toFixed(2));
 }
+
+$('#discount').on('input', updateTotals);
 
 $(document).on('input', '.product-name', function () {
     let val = $(this).val();
@@ -182,11 +235,23 @@ $(document).on('input', '.product-name', function () {
     let row = $(this).closest('tr');
     row.find('.product-id').val(option.data('id') || '');
     row.find('.price').val(option.data('price') || 0);
+    row.find('.min_allowed_price').val(option.data('minAllowedPrice') || 0);
     updateRow(row);
 });
 
 $(document).on('input', '.qty', function () {
     updateRow($(this).closest('tr'));
+});
+
+$(document).on('input', '.price', function () {
+    let row = $(this).closest('tr');
+    let price = parseFloat($(this).val()) || 0;
+    let minPrice = parseFloat(row.find('.min_allowed_price').val()) || 0;
+    if (price < minPrice) {
+        $(this).val(minPrice.toFixed(2));
+        alert('لا يمكن بيع المنتج بأقل من السعر الأدنى المسموح به');
+    }
+    updateRow(row);
 });
 
 $('#add_row').on('click', function () {
@@ -199,6 +264,7 @@ $('#add_row').on('click', function () {
     clone.find('.product-id').attr('name', `items[${index}][product_id]`);
     clone.find('.qty').attr('name', `items[${index}][qty]`);
     clone.find('.price').attr('name', `items[${index}][price]`);
+    clone.find('.min_allowed_price').attr('name', `items[${index}][min_allowed_price]`);
 
     $('#items_body').append(clone);
 });
@@ -282,6 +348,23 @@ $('#invoiceForm').on('submit', function (e) {
 
     if (used > balance) {
         alert('المبلغ المستخدم من رصيد العميل أكبر من الرصيد المتاح');
+        e.preventDefault();
+        return false;
+    }
+
+    // Check minimum prices
+    let valid = true;
+    $('#items_body tr').each(function () {
+        let price = parseFloat($(this).find('.price').val()) || 0;
+        let minPrice = parseFloat($(this).find('.min_allowed_price').val()) || 0;
+        if (price < minPrice) {
+            alert('يوجد أصناف بأسعار أقل من السعر الأدنى المسموح به');
+            valid = false;
+            return false; // break each
+        }
+    });
+
+    if (!valid) {
         e.preventDefault();
         return false;
     }

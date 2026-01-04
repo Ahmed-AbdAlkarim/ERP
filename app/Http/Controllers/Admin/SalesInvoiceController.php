@@ -69,7 +69,7 @@ class SalesInvoiceController extends Controller
         $data = $request->validate([
             'invoice_date' => 'required|date',
             'customer_id'  => 'nullable|exists:customers,id',
-            'payment_status' => 'required|in:paid,partial,due',
+            'payment_status' => 'required|in:paid,partial,installment',
 
             'payments' => 'nullable|required_if:payment_status,paid,partial|array|min:1',
             'payments.*.method' => 'required|in:cashbox,customer_balance',
@@ -114,19 +114,20 @@ class SalesInvoiceController extends Controller
                 throw new \Exception('قيمة الدفع الجزئي غير صحيحة');
             }
 
-            if ($data['payment_status'] === 'due' && $paid > 0) {
+            if ($data['payment_status'] === 'installment' && $paid > 0) {
                 throw new \Exception('لا يمكن الدفع في حالة الأجل');
             }
 
             /* ================= إنشاء الفاتورة ================= */
             $paymentMethod = match ($data['payment_status']) {
                 'paid', 'partial' => 'cash',
-                'due' => 'installment',
+                'installment' => 'installment',
             };
 
             $invoice = SalesInvoice::create([
                 'invoice_number' => $this->generateInvoiceNumber(),
                 'invoice_date'   => $data['invoice_date'],
+                'user_id'        => auth()->id(),
                 'customer_id'    => $data['customer_id'],
                 'subtotal'       => $subtotal,
                 'discount'       => $discount,
@@ -233,10 +234,22 @@ class SalesInvoiceController extends Controller
                 ->where('module_id', $id)
                 ->where('type', 'in')
                 ->get();
+            $totalCashbox = 0;
             foreach ($transactions as $transaction) {
                 $existingPayments[] = [
+                    'method' => 'cashbox',
                     'cashbox_id' => $transaction->cashbox_id,
                     'amount' => $transaction->amount,
+                ];
+                $totalCashbox += $transaction->amount;
+            }
+            // If paid_amount > totalCashbox, the difference is from customer balance
+            if ($invoice->paid_amount > $totalCashbox) {
+                $customerBalanceAmount = $invoice->paid_amount - $totalCashbox;
+                $existingPayments[] = [
+                    'method' => 'customer_balance',
+                    'cashbox_id' => '',
+                    'amount' => $customerBalanceAmount,
                 ];
             }
         }
@@ -255,9 +268,10 @@ class SalesInvoiceController extends Controller
         $data = $request->validate([
             'invoice_date'=>'required|date',
             'customer_id'=>'nullable|exists:customers,id',
-            'payment_status'=>'required|in:paid,partial,due',
+            'payment_status'=>'required|in:paid,partial,installment',
             'payments'=>'nullable|required_if:payment_status,paid,partial|array|min:1',
-            'payments.*.cashbox_id'=>'required|exists:cashboxes,id',
+            'payments.*.method'=>'required|in:cashbox,customer_balance',
+            'payments.*.cashbox_id'=>'nullable|required_if:payments.*.method,cashbox|exists:cashboxes,id',
             'payments.*.amount'=>'required|numeric|min:0.01',
             'discount'=>'nullable|numeric|min:0',
             'items'=>'required|array|min:1',
@@ -274,7 +288,16 @@ class SalesInvoiceController extends Controller
                 }
             }
 
+            $transactions = \App\Models\CashboxTransaction::where('module','sales_invoice')->where('module_id',$invoice->id)->where('type','in')->get();
+            $totalCashbox = $transactions->sum('amount');
             \App\Models\CashboxTransaction::where('module','sales_invoice')->where('module_id',$invoice->id)->delete();
+
+            // Revert customer balance payments
+            $customerBalanceToRevert = $invoice->paid_amount - $totalCashbox;
+            if ($customerBalanceToRevert > 0 && $invoice->customer_id) {
+                $customer = Customer::find($invoice->customer_id);
+                $customer->increment('balance', $customerBalanceToRevert);
+            }
 
             if($invoice->customer_id && $invoice->remaining_amount>0){
                 $customer = Customer::find($invoice->customer_id);
@@ -314,19 +337,37 @@ class SalesInvoiceController extends Controller
             $total = $subtotal - $discount;
 
             $paid = 0;
-            if(isset($data['payments']) && !empty($data['payments'])){
-                foreach($data['payments'] as $payment){
-                    $amount = $payment['amount'];
-                    $paid += $amount;
-                    $this->cashboxService->addTransaction(
-                        $payment['cashbox_id'],
-                        'in',
-                        $amount,
-                        'sales_invoice',
-                        $invoice->id,
-                        'تعديل فاتورة بيع #'.$invoice->invoice_number,
-                        $data['invoice_date']
-                    );
+            if (isset($data['payments']) && !empty($data['payments'])) {
+                foreach ($data['payments'] as $payment) {
+                    $paid += $payment['amount'];
+
+                    // 🔹 الدفع من الخزنة
+                    if ($payment['method'] === 'cashbox') {
+                        $this->cashboxService->addTransaction(
+                            $payment['cashbox_id'],
+                            'in',
+                            $payment['amount'],
+                            'sales_invoice',
+                            $invoice->id,
+                            'تعديل فاتورة بيع #' . $invoice->invoice_number,
+                            $data['invoice_date']
+                        );
+                    }
+
+                    // 🔹 الدفع من رصيد العميل
+                    if ($payment['method'] === 'customer_balance') {
+                        if (!$invoice->customer_id) {
+                            throw new \Exception('لا يمكن الدفع من رصيد بدون تحديد عميل');
+                        }
+
+                        $customer = Customer::lockForUpdate()->find($data['customer_id']);
+
+                        if ($customer->balance < $payment['amount']) {
+                            throw new \Exception('رصيد العميل غير كافٍ');
+                        }
+
+                        $customer->decrement('balance', $payment['amount']);
+                    }
                 }
             }
 
@@ -339,13 +380,13 @@ class SalesInvoiceController extends Controller
             if ($data['payment_status'] == 'partial' && $paid >= $total) {
                 throw new \Exception('لا يمكن دفع المبلغ الكامل كدفع جزئي');
             }
-            if ($data['payment_status'] == 'due' && $paid > 0) {
+            if ($data['payment_status'] == 'installment' && $paid > 0) {
                 throw new \Exception('لا يمكن الدفع في حالة الأجل');
             }
 
             $paymentMethod = match($data['payment_status']) {
                 'paid', 'partial' => 'cash',
-                'due' => 'installment',
+                'installment' => 'installment',
             };
 
             $invoice->update([

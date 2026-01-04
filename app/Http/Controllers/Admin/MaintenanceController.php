@@ -10,6 +10,7 @@ use App\Models\CashboxTransaction;
 use App\Services\CashboxService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Mpdf\Mpdf;
 
 class MaintenanceController extends Controller
 {
@@ -160,5 +161,32 @@ class MaintenanceController extends Controller
                 ->back()
                 ->with('error', 'فشل في التحصيل: ' . $e->getMessage());
         }
+    }
+
+    public function print(Maintenance $maintenance)
+    {
+        $maintenance->load(['customer', 'createdBy', 'updatedBy']);
+
+        $data = [
+            'maintenance' => $maintenance,
+            'customer'    => $maintenance->customer,
+        ];
+
+        $html = view('admin.maintenances.pdf', $data)->render();
+
+        $mpdf = new Mpdf([
+            'mode' => 'utf-8',
+            'format' => 'A5', // A5 portrait
+            'orientation' => 'P',
+            'margin_top' => 5,
+            'margin_bottom' => 5,
+            'margin_left' => 5,
+            'margin_right' => 5,
+            'default_font' => 'dejavusans',
+        ]);
+
+        $mpdf->WriteHTML($html);
+        $fileName = 'maintenance-'.$maintenance->id.'.pdf';
+        return $mpdf->Output($fileName, 'I');
     }
 }
