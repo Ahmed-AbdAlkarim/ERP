@@ -21,39 +21,53 @@
     <!-- Filters -->
     <div class="card border-0 shadow-sm mb-4">
         <div class="card-body">
-            <form id="filter-form" class="row g-3">
+            <form id="filter-form"
+                  class="row g-3"
+                  method="GET"
+                  action="{{ route('admin.expenses.index') }}">
 
                 <div class="col-md-3">
                     <label class="form-label">البحث</label>
-                    <input type="text" class="form-control" name="search" placeholder="البحث بالعنوان...">
+                    <input type="text"
+                           class="form-control"
+                           name="search"
+                           placeholder="البحث بالعنوان..."
+                           value="{{ request('search') }}">
                 </div>
 
                 <div class="col-md-3">
                     <label class="form-label">الفئة</label>
                     <select class="form-select" name="category">
                         <option value="">جميع الفئات</option>
-                        <option value="electricity">كهرباء</option>
-                        <option value="rent">إيجار</option>
-                        <option value="salaries">مرتبات</option>
-                        <option value="shipping">شحن</option>
-                        <option value="maintenance">صيانة</option>
-                        <option value="marketing">تسويق</option>
-                        <option value="office">مكتب</option>
+                        @foreach($categories as $category)
+                            <option value="{{ $category }}"
+                                {{ request('category') == $category ? 'selected' : '' }}>
+                                {{ ucfirst(str_replace('_',' ', $category)) }}
+                            </option>
+                        @endforeach
                     </select>
                 </div>
 
                 <div class="col-md-3">
                     <label class="form-label">من تاريخ</label>
-                    <input type="date" class="form-control" name="start_date">
+                    <input type="date"
+                           class="form-control"
+                           name="start_date"
+                           value="{{ request('start_date') }}">
                 </div>
 
                 <div class="col-md-3">
                     <label class="form-label">إلى تاريخ</label>
-                    <input type="date" class="form-control" name="end_date">
+                    <input type="date"
+                           class="form-control"
+                           name="end_date"
+                           value="{{ request('end_date') }}">
                 </div>
 
                 <div class="col-md-3 d-flex align-items-end">
-                    <button type="button" id="reset-btn" class="btn btn-outline-secondary w-100">
+                    <button type="button"
+                            id="reset-btn"
+                            class="btn btn-outline-secondary w-100">
                         إعادة تعيين
                     </button>
                 </div>
@@ -65,100 +79,45 @@
     <!-- Expenses Table -->
     <div class="card border-0 shadow-sm">
         <div id="table-container" class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table table-hover mb-0">
-                    <thead class="table-light">
-                        <tr>
-                            <th>#</th>
-                            <th>العنوان</th>
-                            <th>الفئة</th>
-                            <th>المبلغ</th>
-                            <th>الخزنة</th>
-                            <th>التاريخ</th>
-                            <th>المرفق</th>
-                            <th>الإجراءات</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse($expenses as $index => $expense)
-                        <tr>
-                            <td>{{ $expenses->firstItem() + $index }}</td>
-                            <td>{{ $expense->title }}</td>
-                            <td>{{ $expense->category }}</td>
-                            <td>{{ number_format($expense->amount,2) }} ج.م</td>
-                            <td>{{ $expense->cashbox?->name ?? 'غير محدد' }}</td>
-                            <td>{{ $expense->expense_date->format('Y-m-d') }}</td>
-                            <td>
-                                @if($expense->attachment)
-                                    <a href="{{ $expense->attachment_url }}" target="_blank">عرض</a>
-                                @else
-                                    -
-                                @endif
-                            </td>
-                            <td>
-                                <a href="{{ route('admin.expenses.edit',$expense) }}" class="btn btn-sm btn-primary">
-                                    تعديل
-                                </a>
-                                <form action="{{ route('admin.expenses.destroy',$expense) }}" method="POST" class="d-inline-block"
-                                      onsubmit="return confirm('هل أنت متأكد من حذف هذا المصروف؟');">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="btn btn-sm btn-danger">
-                                        حذف
-                                    </button>
-                                </form>
-                            </td>
-                        </tr>
-                        @empty
-                        <tr>
-                            <td colspan="8" class="text-center text-muted py-4">
-                                لا توجد مصروفات
-                            </td>
-                        </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
-
-            @if($expenses->hasPages())
-            <div class="p-3">
-                {!! $expenses->appends(request()->query())->links() !!}
-            </div>
-            @endif
+            @include('admin.expenses.partials.table')
         </div>
     </div>
 </div>
 
 {{-- AJAX --}}
+@push('scripts')
 <script>
-$(document).ready(function () {
+$(function () {
 
     let timer = null;
 
     function fetchData(url = "{{ route('admin.expenses.index') }}") {
         $.ajax({
             url: url,
-            type: "GET",
+            method: "GET",
             data: $('#filter-form').serialize(),
             success: function (response) {
-                let table = $(response).find('#table-container').html();
-                $('#table-container').html(table);
+                $('#table-container').html(response);
             }
         });
     }
 
-    // 🔥 بحث لحظي
-    $('input[name="search"]').on('keyup', function () {
-        clearTimeout(timer);
-        timer = setTimeout(function () {
-            fetchData();
-        }, 300);
+    // امنع submit
+    $('#filter-form').on('submit', function (e) {
+        e.preventDefault();
     });
 
-    // باقي الفلاتر
-    $('#filter-form select, #filter-form input[type="date"]').on('change', function () {
-        fetchData();
+    // بحث لحظي
+    $('input[name="search"]').on('input', function () {
+        clearTimeout(timer);
+        timer = setTimeout(fetchData, 300);
     });
+
+    // فلترة فورية
+    $('select[name="category"], input[name="start_date"], input[name="end_date"]')
+        .on('change', function () {
+            fetchData();
+        });
 
     // Reset
     $('#reset-btn').on('click', function () {
@@ -166,7 +125,7 @@ $(document).ready(function () {
         fetchData();
     });
 
-    // Pagination AJAX
+    // Pagination
     $(document).on('click', '.pagination a', function (e) {
         e.preventDefault();
         fetchData($(this).attr('href'));
@@ -174,5 +133,7 @@ $(document).ready(function () {
 
 });
 </script>
+@endpush
+
 
 @endsection

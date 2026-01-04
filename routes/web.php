@@ -322,6 +322,9 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
         
         Route::get('cashboxes/transfer', [CashboxController::class, 'showTransferForm'])
         ->name('cashboxes.transfer.form');
+
+        Route::post('cashboxes/receive-from-customer',[CashboxController::class, 'receiveFromCustomer'])
+        ->name('cashboxes.receive_from_customer');
         
         Route::post('cashboxes/transfer', [CashboxController::class, 'transfer'])
         ->name('cashboxes.transfer');

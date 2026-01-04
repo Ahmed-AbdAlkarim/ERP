@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Cashbox;
 use App\Models\CashboxTransaction;
+use App\Models\Customer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -132,7 +133,41 @@ class CashboxController extends Controller
         return view('admin.cashboxes.transactions.index', compact('transactions'));
     }
 
+    public function receiveFromCustomer(Request $request)
+    {
+        $data = $request->validate([
+            'customer_id' => 'required|exists:customers,id',
+            'cashbox_id'  => 'required|exists:cashboxes,id',
+            'amount'      => 'required|numeric|min:0.01',
+            'note'        => 'nullable|string',
+        ]);
 
+        DB::transaction(function () use ($data) {
+
+            $customer = Customer::findOrFail($data['customer_id']);
+            $cashbox  = Cashbox::findOrFail($data['cashbox_id']);
+
+            // زيادة رصيد الخزنة
+            $cashbox->increment('balance', $data['amount']);
+
+            // زيادة رصيد العميل
+            $customer->increment('balance', $data['amount']);
+
+            // تسجيل حركة خزنة
+            CashboxTransaction::create([
+                'cashbox_id' => $cashbox->id,
+                'type'       => 'in',
+                'amount'     => $data['amount'],
+                'module'     => 'customer_payment',
+                'module_id'  => $customer->id,
+                'note'       => $data['note'],
+                'date'       => now(),
+                'user_id'    => auth()->id(),
+            ]);
+        });
+
+        return back()->with('success', 'تم استلام المبلغ من العميل بنجاح');
+    }
    
     public function show(Cashbox $cashbox)
     {

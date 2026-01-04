@@ -82,29 +82,28 @@ class DebtsController extends Controller
     {
         $request->validate([
             'customer_id' => 'required|exists:customers,id',
-            'cashbox_id' => 'required|exists:cashboxes,id',
-            'amount' => 'required|numeric|min:0.01',
+            'cashbox_id'  => 'required|exists:cashboxes,id',
+            'amount'      => 'required|numeric|min:0.01',
         ]);
 
         $customer = Customer::findOrFail($request->customer_id);
-        $cashbox = Cashbox::findOrFail($request->cashbox_id);
+        $cashbox  = Cashbox::findOrFail($request->cashbox_id);
 
-       
+        // لازم خزنة يومية
         if ($cashbox->type !== 'daily') {
             return back()->withErrors(['cashbox_id' => 'يجب اختيار خزنة يومية فقط']);
         }
 
+        // إجمالي مديونية العميل
         $totalDebt = SalesInvoice::where('customer_id', $customer->id)
             ->where('remaining_amount', '>', 0)
             ->sum('remaining_amount');
 
-        if ($totalDebt < $request->amount) {
-            return back()->withErrors(['amount' => 'المبلغ المطلوب أكبر من المديونية الحالية']);
-        }
+        DB::transaction(function () use ($request, $customer, $cashbox, $totalDebt) {
 
-        DB::transaction(function () use ($request, $customer) {
-        
             $cashboxService = new CashboxService();
+
+            // 1️⃣ تسجيل دخول المبلغ كله في الخزنة
             $cashboxService->addTransaction(
                 $request->cashbox_id,
                 'in',
@@ -114,28 +113,39 @@ class DebtsController extends Controller
                 'دفعة من العميل ' . $customer->name
             );
 
-        
-            $invoices = SalesInvoice::where('customer_id', $customer->id)
-                ->where('remaining_amount', '>', 0)
-                ->orderBy('invoice_date')
-                ->get();
-
             $remainingAmount = $request->amount;
 
-            foreach ($invoices as $invoice) {
-                if ($remainingAmount <= 0) break;
+            // 2️⃣ سداد الفواتير بالترتيب
+            if ($totalDebt > 0) {
 
-                $payAmount = min($remainingAmount, $invoice->remaining_amount);
-                $invoice->increment('paid_amount', $payAmount);
-                $invoice->decrement('remaining_amount', $payAmount);
+                $invoices = SalesInvoice::where('customer_id', $customer->id)
+                    ->where('remaining_amount', '>', 0)
+                    ->orderBy('invoice_date')
+                    ->lockForUpdate()
+                    ->get();
 
-                $remainingAmount -= $payAmount;
+                foreach ($invoices as $invoice) {
+                    if ($remainingAmount <= 0) break;
+
+                    $payAmount = min($remainingAmount, $invoice->remaining_amount);
+
+                    $invoice->increment('paid_amount', $payAmount);
+                    $invoice->decrement('remaining_amount', $payAmount);
+
+                    $remainingAmount -= $payAmount;
+                }
+
+                // خصم اللي اتسدد فعليًا من مديونية العميل
+                $customer->decrement('debt', min($request->amount, $totalDebt));
             }
 
-        
-            $customer->decrement('debt', $request->amount);
+            // 3️⃣ لو في فلوس زيادة → تتحط رصيد للعميل
+            if ($remainingAmount > 0) {
+                $customer->increment('balance', $remainingAmount);
+            }
         });
 
         return back()->with('success', 'تم استلام الدفعة بنجاح');
     }
+
 }

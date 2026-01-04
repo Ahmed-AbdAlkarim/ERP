@@ -37,7 +37,6 @@ class ExpenseController extends Controller
             $query->whereDate('expense_date', '<=', $request->end_date);
         }
 
-      
         $totalAmount = (clone $query)->sum('amount');
 
         $expenses = $query
@@ -46,27 +45,44 @@ class ExpenseController extends Controller
 
         $safes = Cashbox::all();
 
+        $categories = Expense::query()
+            ->select('category')
+            ->distinct()
+            ->orderBy('category')
+            ->pluck('category');
+
+        if ($request->ajax()) {
+            return view('admin.expenses.partials.table', compact('expenses'));
+        }
+
         return view('admin.expenses.index', compact(
             'expenses',
             'safes',
-            'totalAmount'
+            'totalAmount',
+            'categories'
         ));
     }
+
 
     public function create()
     {
         $safes = Cashbox::all();
-        return view('admin.expenses.create', compact('safes'));
+
+        $categories = Expense::query()
+            ->select('category')
+            ->distinct()
+            ->orderBy('category')
+            ->pluck('category');
+
+        return view('admin.expenses.create', compact('safes', 'categories'));
     }
+
 
     public function store(Request $request, CashboxService $cashboxService)
     {
         $data = $request->validate([
             'title' => 'required|string|max:255',
-            'category' => ['required', Rule::in([
-                'electricity', 'rent', 'salaries',
-                'shipping', 'maintenance', 'marketing', 'office'
-            ])],
+            'category' => 'required|string|max:255',
             'amount' => 'required|numeric|min:0.01',
             'cashbox_id' => 'required|exists:cashboxes,id',
             'expense_date' => 'required|date',
@@ -98,17 +114,21 @@ class ExpenseController extends Controller
     public function edit(Expense $expense)
     {
         $safes = Cashbox::all();
-        return view('admin.expenses.edit', compact('expense', 'safes'));
+
+        $categories = Expense::query()
+            ->select('category')
+            ->distinct()
+            ->orderBy('category')
+            ->pluck('category');
+
+        return view('admin.expenses.edit', compact('expense', 'safes', 'categories'));
     }
 
     public function update(Request $request, Expense $expense, CashboxService $cashboxService)
     {
         $data = $request->validate([
             'title' => 'required|string|max:255',
-            'category' => ['required', Rule::in([
-                'electricity', 'rent', 'salaries',
-                'shipping', 'maintenance', 'marketing', 'office'
-            ])],
+            'category' => 'required|string|max:255',
             'amount' => 'required|numeric|min:0.01',
             'cashbox_id' => 'required|exists:cashboxes,id',
             'expense_date' => 'required|date',

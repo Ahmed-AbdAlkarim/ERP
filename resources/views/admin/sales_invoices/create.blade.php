@@ -14,22 +14,38 @@
     <h4 class="mb-4">إنشاء فاتورة بيع</h4>
 
     @if ($errors->any())
-    <div class="alert alert-danger">
-        <ul>@foreach ($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul>
-    </div>
+        <div class="alert alert-danger">
+            <ul>
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
     @endif
 
-    <form action="{{ route('admin.sales-invoices.store') }}" method="POST">
+    <form action="{{ route('admin.sales-invoices.store') }}" method="POST" id="invoiceForm">
         @csrf
-        <div class="row">
+
+        {{-- بيانات الفاتورة --}}
+        <div class="row mb-3">
             <div class="col-md-4">
                 <label>العميل</label>
-                <select name="customer_id" class="form-control">
+                <select name="customer_id" id="customer_select" class="form-control">
                     <option value="">اختــر...</option>
                     @foreach ($customers as $customer)
-                        <option value="{{ $customer->id }}">{{ $customer->name }}</option>
+                        <option
+                            value="{{ $customer->id }}"
+                            data-balance="{{ $customer->balance }}"
+                        >
+                            {{ $customer->name }}
+                        </option>
                     @endforeach
                 </select>
+
+                <div class="mt-2">
+                    <label>رصيد العميل</label>
+                    <input type="text" id="customer_balance" class="form-control" readonly value="0.00">
+                </div>
             </div>
 
             <div class="col-md-4">
@@ -38,41 +54,41 @@
             </div>
 
             <div class="col-md-4">
-                <label>طريقة الدفع</label>
+                <label>حالة الدفع</label>
                 <select name="payment_status" id="payment_status" class="form-control" required>
-                    <option value="paid">كاش</option>
+                    <option value="paid">مدفوع</option>
                     <option value="partial">دفع جزئي</option>
-                    <option value="due" selected>أجل</option>
+                    <option value="due" selected>آجل</option>
                 </select>
             </div>
         </div>
 
-                {{-- الدفع --}}
-                <div id="cashbox_row" style="display:none;">
-                    <h6>تفاصيل الدفع</h6>
+        {{-- الدفع --}}
+        <div id="cashbox_row" style="display:none;" class="mb-4">
+            <h6>تفاصيل الدفع</h6>
 
-                    <div id="payment_details"></div>
+            <div id="payment_details"></div>
 
-                    <button type="button" id="add_payment" class="btn btn-secondary mb-2">
-                        + إضافة دفعة
-                    </button>
+            <button type="button" id="add_payment" class="btn btn-secondary mb-2">
+                + إضافة دفعة
+            </button>
 
-                    <div class="mb-3">
-                        <strong>إجمالي المدفوع: </strong>
-                        <span id="total_paid">0</span> ج.م
-                    </div>
-                </div>
+            <div>
+                <strong>إجمالي المدفوع: </strong>
+                <span id="total_paid">0.00</span> ج.م
+            </div>
+        </div>
 
         <hr>
 
-        <h5>الأصنــاف</h5>
-        <table class="table table-bordered" id="items_table">
+        {{-- الأصناف --}}
+        <h5>الأصناف</h5>
+        <table class="table table-bordered">
             <thead>
                 <tr>
-                    <th style="width: 25%;">الصنف</th>
+                    <th style="width:25%">الصنف</th>
                     <th>الكمية</th>
                     <th>السعر</th>
-                    <th>أقل سعر</th>
                     <th>الإجمالي</th>
                     <th></th>
                 </tr>
@@ -80,213 +96,195 @@
             <tbody id="items_body">
                 <tr>
                     <td>
-                        <input type="text" name="items[0][product_name]" list="products" class="form-control" placeholder="ابحث هنا" required onchange="updateProductId(this, 0)" oninput="updateProductId(this, 0)" onblur="updateProductId(this, 0)">
-                        <input type="hidden" name="items[0][product_id]" id="product_id_0">
+                        <input type="text"
+                               list="products"
+                               class="form-control product-name"
+                               placeholder="ابحث هنا"
+                               required>
+                        <input type="hidden" name="items[0][product_id]" class="product-id">
                     </td>
-                    <td><input type="number" name="items[0][qty]" class="form-control qty" min="1" value="1" required></td>
-                    <td><input type="number" name="items[0][price]" class="form-control price" step="0.01" required readonly></td>
-                    <td><input type="number" name="items[0][min_price]" class="form-control min_price" readonly></td>
-                    <td><input type="number" name="items[0][total]" class="form-control total" readonly></td>
-                    <td><button type="button" class="btn btn-danger remove_row">X</button></td>
+                    <td>
+                        <input type="number" name="items[0][qty]" class="form-control qty" min="1" value="1">
+                    </td>
+                    <td>
+                        <input type="number" name="items[0][price]" class="form-control price" readonly>
+                    </td>
+                    <td>
+                        <input type="number" class="form-control total" readonly>
+                    </td>
+                    <td>
+                        <button type="button" class="btn btn-danger remove_row">X</button>
+                    </td>
                 </tr>
             </tbody>
         </table>
 
-        <button type="button" id="add_row" class="btn btn-primary mb-3">إضافة صنف</button>
+        <button type="button" id="add_row" class="btn btn-primary mb-3">
+            إضافة صنف
+        </button>
 
         <hr>
 
+        {{-- الإجماليات --}}
         <div class="row">
             <div class="col-md-4">
-                <label>الإجمالي الفرعي</label>
-                <input type="number" id="subtotal" name="subtotal" class="form-control" readonly>
-            </div>
-            <div class="col-md-4">
-                <label>الخصم</label>
-                <input type="number" id="discount" name="discount" class="form-control" value="0" step="0.01">
-            </div>
-            <div class="col-md-4">
-                <label>الإجمالي النهائي</label>
-                <input type="number" id="total" name="total" class="form-control" readonly>
+                <label>الإجمالي</label>
+                <input type="number" id="total_invoice" class="form-control" readonly>
             </div>
         </div>
 
-        <button type="submit" class="btn btn-success mt-3">حفظ الفاتورة</button>
+        <button type="submit" class="btn btn-success mt-3">
+            حفظ الفاتورة
+        </button>
     </form>
 </div>
 
+{{-- المنتجات --}}
 <datalist id="products">
 @foreach($products as $product)
-<option value="{{ $product->name }}" data-id="{{ $product->id }}" data-price="{{ $product->selling_price }}" data-min-price="{{ $product->min_allowed_price }}">
+    <option
+        value="{{ $product->name }}"
+        data-id="{{ $product->id }}"
+        data-price="{{ $product->selling_price }}">
+    </option>
 @endforeach
 </datalist>
 
 <script>
-document.addEventListener("DOMContentLoaded", function () {
-
-    window.updateProductId = function (input, index) {
-        const selectedValue = input.value.trim();
-        const datalist = document.getElementById('products');
-        const options = datalist.querySelectorAll('option');
-        let productId = '';
-        let price = '';
-        let minPrice = '';
-
-        for (let option of options) {
-            if (option.value.trim() === selectedValue) {
-                productId = option.getAttribute('data-id');
-                price = option.getAttribute('data-price');
-                minPrice = option.getAttribute('data-min-price');
-                break;
-            }
-        }
-
-        document.getElementById(`product_id_${index}`).value = productId;
-        const row = input.closest('tr');
-        row.querySelector('.price').value = price;
-        row.querySelector('.min_price').value = minPrice;
-        updateRow(row);
-        updateTotals();
-    }
-
-    $('.cashbox_select').select2();
-
-    // Add event listener for qty changes on existing rows
-    $('.qty').on('input', function() {
-        updateRow($(this).closest('tr')[0]);
-        updateTotals();
-    });
+/* ================= العميل ================= */
+$('#customer_select').on('change', function () {
+    let balance = $('option:selected', this).data('balance') || 0;
+    $('#customer_balance').val(parseFloat(balance).toFixed(2));
 });
 
-function updateRow(row){
-    let qty = parseFloat(row.querySelector('.qty').value)||0;
-    let price = parseFloat(row.querySelector('.price').value)||0;
-    row.querySelector('.total').value = qty*price;
+/* ================= الأصناف ================= */
+function updateRow(row) {
+    let qty = parseFloat($(row).find('.qty').val()) || 0;
+    let price = parseFloat($(row).find('.price').val()) || 0;
+    $(row).find('.total').val((qty * price).toFixed(2));
+    updateTotals();
 }
-function updateTotals(){
-    let total=0;
-    document.querySelectorAll('#items_body tr').forEach(r=>total+=parseFloat(r.querySelector('.total').value)||0);
-    document.getElementById('subtotal').value=total;
-    let discount=parseFloat(document.getElementById('discount').value)||0;
-    document.getElementById('total').value=total-discount;
+
+function updateTotals() {
+    let total = 0;
+    $('#items_body .total').each(function () {
+        total += parseFloat($(this).val()) || 0;
+    });
+    $('#total_invoice').val(total.toFixed(2));
 }
-document.getElementById('discount').addEventListener('input',updateTotals);
-document.getElementById('add_row').addEventListener('click',()=>{
-    let index=document.querySelectorAll('#items_body tr').length;
-    let clone=document.querySelector('#items_body tr').cloneNode(true);
-    clone.querySelectorAll('input,select').forEach(el=>{
-        if(el.name) el.name=el.name.replace(/\d+/,index);
-        if(el.classList.contains('qty')) el.value=1;
-        if(el.classList.contains('price')||el.classList.contains('total')) el.value=0;
-    });
-    document.getElementById('items_body').appendChild(clone);
-    // Initialize Select2 on the new product select
-    clone.querySelector('.product_select').classList.remove('select2-hidden-accessible');
-    $(clone.querySelector('.product_select')).select2().on('select2:select', handleProductSelect);
-    // Add event listener for qty changes on the new row
-    $(clone.querySelector('.qty')).on('input', function() {
-        updateRow($(this).closest('tr')[0]);
-        updateTotals();
-    });
-});
-document.getElementById('items_body').addEventListener('click',e=>{
-    if(e.target.classList.contains('remove_row')){
-        let rows=document.querySelectorAll('#items_body tr');
-        if(rows.length>1)e.target.closest('tr').remove();
-        updateTotals();
-    }
+
+$(document).on('input', '.product-name', function () {
+    let val = $(this).val();
+    let option = $('#products option').filter(function () {
+        return this.value === val;
+    }).first();
+
+    let row = $(this).closest('tr');
+    row.find('.product-id').val(option.data('id') || '');
+    row.find('.price').val(option.data('price') || 0);
+    updateRow(row);
 });
 
-    /* ================= الدفع ================= */
-    const paymentStatus = document.getElementById('payment_status');
-    const cashboxRow = document.getElementById('cashbox_row');
-    const paymentDetails = document.getElementById('payment_details');
+$(document).on('input', '.qty', function () {
+    updateRow($(this).closest('tr'));
+});
 
-    function calculatePaid() {
-        let total = 0;
-        document.querySelectorAll('.payment-amount').forEach(i => {
-            total += parseFloat(i.value) || 0;
-        });
-        document.getElementById('total_paid').textContent = total.toFixed(2);
-    }
+$('#add_row').on('click', function () {
+    let index = $('#items_body tr').length;
+    let clone = $('#items_body tr:first').clone();
 
-    function addPaymentRow(index) {
-        let div = document.createElement('div');
-        div.className = 'row g-3 mb-2 payment-row';
-        div.innerHTML = `
-            <div class="col-md-4">
+    clone.find('input').val('');
+    clone.find('.qty').val(1);
+
+    clone.find('.product-id').attr('name', `items[${index}][product_id]`);
+    clone.find('.qty').attr('name', `items[${index}][qty]`);
+    clone.find('.price').attr('name', `items[${index}][price]`);
+
+    $('#items_body').append(clone);
+});
+
+/* ================= الدفع ================= */
+let paymentIndex = 0;
+
+function addPaymentRow() {
+    let html = `
+        <div class="row g-3 mb-2 payment-row">
+            <div class="col-md-3">
+                <label>طريقة الدفع</label>
+                <select name="payments[${paymentIndex}][method]" class="form-control payment-method">
+                    <option value="cashbox">خزنة</option>
+                    <option value="customer_balance">رصيد العميل</option>
+                </select>
+            </div>
+            <div class="col-md-3 cashbox-col">
                 <label>الخزنة</label>
-                <select name="payments[${index}][cashbox_id]" class="form-control" required>
-                    <option disabled selected>اختر الخزنة</option>
+                <select name="payments[${paymentIndex}][cashbox_id]" class="form-control">
+                    <option value="">اختر الخزنة</option>
                     @foreach($cashboxes as $cb)
                         <option value="{{ $cb->id }}">{{ $cb->name }}</option>
                     @endforeach
                 </select>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-3">
                 <label>المبلغ</label>
-                <input type="number" name="payments[${index}][amount]" class="form-control payment-amount" step="0.01" min="0" required>
+                <input type="number" name="payments[${paymentIndex}][amount]"
+                       class="form-control payment-amount" step="0.01">
             </div>
-            <div class="col-md-4 d-flex align-items-end">
+            <div class="col-md-3 d-flex align-items-end">
                 <button type="button" class="btn btn-danger remove-payment">حذف</button>
             </div>
-        `;
-        paymentDetails.appendChild(div);
-        // Initialize Select2 for the new select
-        $(div.querySelector('select')).select2();
+        </div>`;
+    $('#payment_details').append(html);
+    paymentIndex++;
+}
+
+$('#payment_status').on('change', function () {
+    if (this.value === 'paid' || this.value === 'partial') {
+        $('#cashbox_row').show();
+        if ($('#payment_details').children().length === 0) addPaymentRow();
+    } else {
+        $('#cashbox_row').hide();
+        $('#payment_details').html('');
+        $('#total_paid').text('0.00');
     }
+}).trigger('change');
 
-    let paymentIndex = 0;
+$('#add_payment').on('click', addPaymentRow);
 
-    paymentStatus.addEventListener('change', function () {
+$(document).on('input', '.payment-amount', function () {
+    let total = 0;
+    $('.payment-amount').each(function () {
+        total += parseFloat($(this).val()) || 0;
+    });
+    $('#total_paid').text(total.toFixed(2));
+});
 
-        if (this.value === 'paid' || this.value === 'partial') {
-            cashboxRow.style.display = 'block';
+$(document).on('change', '.payment-method', function () {
+    let row = $(this).closest('.payment-row');
+    if (this.value === 'customer_balance') {
+        row.find('.cashbox-col').hide();
+        row.find('[name$="[cashbox_id]"]').val('');
+    } else {
+        row.find('.cashbox-col').show();
+    }
+});
 
-            if (paymentDetails.children.length === 0) {
-                addPaymentRow(paymentIndex++);
-            }
+/* ================= تحقق قبل الإرسال ================= */
+$('#invoiceForm').on('submit', function (e) {
+    let balance = parseFloat($('#customer_balance').val()) || 0;
+    let used = 0;
 
-        } else {
-            // أجل
-            cashboxRow.style.display = 'none';
-            paymentDetails.innerHTML = '';
-            paymentIndex = 0;
-            document.getElementById('total_paid').textContent = '0';
+    $('.payment-row').each(function () {
+        if ($(this).find('.payment-method').val() === 'customer_balance') {
+            used += parseFloat($(this).find('.payment-amount').val()) || 0;
         }
     });
 
-    document.getElementById('add_payment').onclick = function () {
-        addPaymentRow(paymentIndex++);
-    };
-
-    document.addEventListener('input', e => {
-        if (e.target.classList.contains('payment-amount')) {
-            calculatePaid();
-        }
-    });
-
-    document.addEventListener('click', e => {
-        if (e.target.classList.contains('remove-payment')) {
-            e.target.closest('.payment-row').remove();
-            calculatePaid();
-        }
-    });
-
-    paymentStatus.dispatchEvent(new Event('change'));
-    updateTotals();
-
-    // Form validation before submit
-    document.querySelector('form').addEventListener('submit', function(e) {
-        const rows = document.querySelectorAll('#items_body tr');
-        for (let i = 0; i < rows.length; i++) {
-            const productId = document.getElementById(`product_id_${i}`).value;
-            if (!productId) {
-                alert('يرجى اختيار صنف صحيح في الصف ' + (i + 1));
-                e.preventDefault();
-                return false;
-            }
-        }
-    });
+    if (used > balance) {
+        alert('المبلغ المستخدم من رصيد العميل أكبر من الرصيد المتاح');
+        e.preventDefault();
+        return false;
+    }
+});
 </script>
 @endsection

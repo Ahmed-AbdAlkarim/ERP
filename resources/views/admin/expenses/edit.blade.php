@@ -47,15 +47,17 @@
                                 <label>الفئة *</label>
                                 <select name="category" class="form-select" required>
                                     <option value="">اختر الفئة</option>
-                                    <option value="electricity" {{ old('category', $expense->category) == 'electricity' ? 'selected' : '' }}>كهرباء</option>
-                                    <option value="rent" {{ old('category', $expense->category) == 'rent' ? 'selected' : '' }}>إيجار</option>
-                                    <option value="salaries" {{ old('category', $expense->category) == 'salaries' ? 'selected' : '' }}>مرتبات</option>
-                                    <option value="shipping" {{ old('category', $expense->category) == 'shipping' ? 'selected' : '' }}>شحن</option>
-                                    <option value="maintenance" {{ old('category', $expense->category) == 'maintenance' ? 'selected' : '' }}>صيانة</option>
-                                    <option value="marketing" {{ old('category', $expense->category) == 'marketing' ? 'selected' : '' }}>تسويق</option>
-                                    <option value="office" {{ old('category', $expense->category) == 'office' ? 'selected' : '' }}>مكتب</option>
+
+                                    @foreach($categories as $category)
+                                        <option value="{{ $category }}"
+                                            {{ old('category', $expense->category) == $category ? 'selected' : '' }}>
+                                            {{ ucfirst(str_replace('_',' ', $category)) }}
+                                        </option>
+                                    @endforeach
+
                                 </select>
                             </div>
+
 
                             <div class="col-md-6">
                                 <label>المبلغ *</label>

@@ -17,6 +17,11 @@
                 <i class="fas fa-exchange-alt me-2"></i>تحويل أموال
             </a>
 
+            <button class="btn btn-success ms-2" data-bs-toggle="modal" data-bs-target="#receiveCustomerCash">
+                <i class="fas fa-hand-holding-usd me-2"></i>استلام نقدية من عميل
+            </button>
+
+
             <a href="{{ route('admin.cashboxes.transactions') }}" class="btn btn-secondary ms-2">
                 <i class="fas fa-list me-2"></i>عرض جميع العمليات
             </a>
@@ -188,4 +193,55 @@
         </div>
     </div>
 </div>
+
+
+<div class="modal fade" id="receiveCustomerCash" tabindex="-1">
+    <div class="modal-dialog">
+        <form action="{{ route('admin.cashboxes.receive_from_customer') }}" method="POST">
+            @csrf
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">استلام نقدية من عميل</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label>العميل</label>
+                        <select name="customer_id" class="form-control" required>
+                            @foreach(\App\Models\Customer::all() as $customer)
+                                <option value="{{ $customer->id }}">{{ $customer->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label>الخزنة</label>
+                        <select name="cashbox_id" class="form-control" required>
+                            @foreach($mainCashboxes->merge($dailyCashboxes) as $cashbox)
+                                <option value="{{ $cashbox->id }}">{{ $cashbox->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label>المبلغ</label>
+                        <input type="number" step="0.01" name="amount" class="form-control" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label>ملاحظة</label>
+                        <textarea name="note" class="form-control"></textarea>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                    <button class="btn btn-success">تأكيد الاستلام</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
 @endsection

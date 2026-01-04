@@ -26,6 +26,12 @@
             <label>المديونية</label>
             <input type="number" step="0.01" name="debt" class="form-control" value="0.00" required>
         </div>
+
+        <div class="mb-3">
+            <label>الرصيد</label>
+            <input type="number" step="0.01" name="balance" class="form-control" value="0.00" required>
+        </div>
+        
         <div class="mb-3">
             <label>ملاحظات</label>
             <textarea name="notes" class="form-control"></textarea>

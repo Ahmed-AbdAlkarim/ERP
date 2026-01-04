@@ -27,6 +27,12 @@
             <label>المديونية</label>
             <input type="number" step="0.01" name="debt" class="form-control" value="{{ $customer->debt }}">
         </div>
+
+        <div class="mb-3">
+            <label>الرصيد</label>
+            <input type="number" step="0.01" name="balance" class="form-control" value="{{ $customer->balance }}">
+        </div>
+        
         <div class="mb-3">
             <label>ملاحظات</label>
             <textarea name="notes" class="form-control">{{ $customer->notes }}</textarea>

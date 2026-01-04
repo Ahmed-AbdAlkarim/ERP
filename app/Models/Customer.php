@@ -15,6 +15,7 @@ class Customer extends Model
         'address', 
         'last_purchase_date', 
         'debt', 
+        'balance',
         'notes'
     ];
 }

@@ -156,5 +156,8 @@
     <!-- Page JS -->
     <script src="{{asset('assets/js/dashboards-analytics.js')}}"></script>
     <script src="{{asset('assets/js/app-user-list.js')}}"></script>
+    
+    @stack('scripts')
+
   </body>
 </html>

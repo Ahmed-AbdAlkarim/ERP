@@ -242,7 +242,6 @@ function openSupplierPaymentModal(supplierId, supplierName, maxAmount) {
 function openCustomerPaymentModal(customerId, customerName, maxAmount) {
     document.getElementById('customer_id').value = customerId;
     document.getElementById('customer_name').textContent = customerName;
-    document.getElementById('customer_amount').max = maxAmount;
     new bootstrap.Modal(document.getElementById('customerPaymentModal')).show();
 }
 </script>

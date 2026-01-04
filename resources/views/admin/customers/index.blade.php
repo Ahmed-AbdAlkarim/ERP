@@ -55,10 +55,11 @@
                                 <th>الاسم</th>
                                 <th>رقم الهاتف</th>
                                 <th>العنوان</th>
-                                <th>آخر شراء</th>
+                               
                                 @if(auth()->user()->can('show_customer_debts'))
                                 <th>المديونية</th>
                                 @endif
+                                <th>الرصيد</th>
                                 @if(auth()->user()->can('show_customer_details') || auth()->user()->can('edit_customer') || auth()->user()->can('delete_customer'))
                                     <th>إجراءات</th>
                                 @endif
@@ -70,12 +71,6 @@
                                     <td class="fw-bold">{{ $customer->name }}</td>
                                     <td>{{ $customer->phone }}</td>
                                     <td>{{ $customer->address }}</td>
-                                    <td>
-                                        {{ $customer->last_purchase_date
-                                            ? \Carbon\Carbon::parse($customer->last_purchase_date)->format('d/m/Y')
-                                            : '—'
-                                        }}
-                                    </td>
                                     @if(auth()->user()->can('show_customer_debts'))
                                     <td class="fw-bold text-danger">
                                         @can('show_customer_debts')
@@ -83,6 +78,10 @@
                                         @endcan
                                     </td>
                                     @endif
+
+                                    <td class="fw-bold text-success">
+                                        {{ number_format($customer->balance, 2) }} ج.م
+                                    </td>
                                     
                                     @if(auth()->user()->can('show_customer_details') || auth()->user()->can('edit_customer') || auth()->user()->can('delete_customer'))
                                     <td>

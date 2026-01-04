@@ -11,6 +11,7 @@
         @if(auth()->user()->can('show_customer_debts'))
         <tr><th>المديونية</th><td>{{ $customer->debt }}</td></tr>
         @endif
+        <tr><th>الرصيد</th><td>{{ $customer->balance }}</td></tr>
         <tr><th>ملاحظات</th><td>{{ $customer->notes }}</td></tr>
     </table>
     <a href="{{ route('admin.customers.index') }}" class="btn btn-primary">عودة</a>

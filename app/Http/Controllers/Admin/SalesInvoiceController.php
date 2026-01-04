@@ -67,102 +67,160 @@ class SalesInvoiceController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'invoice_date'=>'required|date',
-            'customer_id'=>'nullable|exists:customers,id',
-            'payment_status'=>'required|in:paid,partial,due',
-            'payments'=>'nullable|required_if:payment_status,paid,partial|array|min:1',
-            'payments.*.cashbox_id'=>'required|exists:cashboxes,id',
-            'payments.*.amount'=>'required|numeric|min:0.01',
-            'discount'=>'nullable|numeric|min:0',
-            'items'=>'required|array|min:1',
-            'items.*.product_id'=>'required|exists:products,id',
-            'items.*.qty'=>'required|integer|min:1',
-            'items.*.price'=>'required|numeric|min:0',
+            'invoice_date' => 'required|date',
+            'customer_id'  => 'nullable|exists:customers,id',
+            'payment_status' => 'required|in:paid,partial,due',
+
+            'payments' => 'nullable|required_if:payment_status,paid,partial|array|min:1',
+            'payments.*.method' => 'required|in:cashbox,customer_balance',
+            'payments.*.cashbox_id' => 'nullable|required_if:payments.*.method,cashbox|exists:cashboxes,id',
+            'payments.*.amount' => 'required|numeric|min:0.01',
+
+            'discount' => 'nullable|numeric|min:0',
+
+            'items' => 'required|array|min:1',
+            'items.*.product_id' => 'required|exists:products,id',
+            'items.*.qty' => 'required|integer|min:1',
+            'items.*.price' => 'required|numeric|min:0',
         ]);
 
         DB::beginTransaction();
+
         try {
+            /* ================= الحسابات ================= */
             $subtotal = 0;
-            foreach($data['items'] as $item){
+            foreach ($data['items'] as $item) {
                 $subtotal += $item['qty'] * $item['price'];
             }
+
             $discount = $data['discount'] ?? 0;
-            $total = $subtotal - $discount;
+            $total    = $subtotal - $discount;
+
             $paid = 0;
             if (in_array($data['payment_status'], ['paid', 'partial'])) {
-                $paid = array_sum(array_column($data['payments'], 'amount'));
+                foreach ($data['payments'] as $p) {
+                    $paid += $p['amount'];
+                }
             }
-            $remaining = $total - $paid;
-            $status = $data['payment_status'];
 
-           
-            $paymentMethod = match($data['payment_status']) {
+            $remaining = $total - $paid;
+
+            /* ================= التحقق ================= */
+            if ($data['payment_status'] === 'paid' && $remaining != 0) {
+                throw new \Exception('يجب سداد كامل المبلغ في حالة مدفوع');
+            }
+
+            if ($data['payment_status'] === 'partial' && ($paid <= 0 || $paid >= $total)) {
+                throw new \Exception('قيمة الدفع الجزئي غير صحيحة');
+            }
+
+            if ($data['payment_status'] === 'due' && $paid > 0) {
+                throw new \Exception('لا يمكن الدفع في حالة الأجل');
+            }
+
+            /* ================= إنشاء الفاتورة ================= */
+            $paymentMethod = match ($data['payment_status']) {
                 'paid', 'partial' => 'cash',
                 'due' => 'installment',
             };
 
             $invoice = SalesInvoice::create([
-                'invoice_number'=>$this->generateInvoiceNumber(),
-                'invoice_date'=>$data['invoice_date'],
-                'customer_id'=>$data['customer_id'],
-                'subtotal'=>$subtotal,
-                'discount'=>$discount,
-                'total'=>$total,
-                'payment_method'=>$paymentMethod,
-                'status'=>$status,
-                'paid_amount'=>$paid,
-                'remaining_amount'=>$remaining,
+                'invoice_number' => $this->generateInvoiceNumber(),
+                'invoice_date'   => $data['invoice_date'],
+                'customer_id'    => $data['customer_id'],
+                'subtotal'       => $subtotal,
+                'discount'       => $discount,
+                'total'          => $total,
+                'payment_method' => $paymentMethod,
+                'status'         => $data['payment_status'],
+                'paid_amount'    => $paid,
+                'remaining_amount' => $remaining,
             ]);
 
+            /* ================= الأصناف والمخزون ================= */
             $totalCost = 0;
-            foreach($data['items'] as $item){
+
+            foreach ($data['items'] as $item) {
                 $product = Product::lockForUpdate()->find($item['product_id']);
-                $lineCost = $product->avg_cost * $item['qty'];
+
+                $lineCost  = $product->avg_cost * $item['qty'];
                 $totalCost += $lineCost;
 
                 SalesInvoiceItem::create([
-                    'sales_invoice_id'=>$invoice->id,
-                    'product_id'=>$product->id,
-                    'qty'=>$item['qty'],
-                    'price'=>$item['price'],
-                    'total'=>$item['qty']*$item['price'],
-                    'profit'=>0,
+                    'sales_invoice_id' => $invoice->id,
+                    'product_id'       => $product->id,
+                    'qty'              => $item['qty'],
+                    'price'            => $item['price'],
+                    'total'            => $item['qty'] * $item['price'],
+                    'profit'           => 0,
                 ]);
 
-                if(!$product->is_service){
+                if (!$product->is_service) {
                     $product->decrement('stock', $item['qty']);
                 }
             }
 
-            $invoice->update(['profit'=>$total-$totalCost]);
+            $invoice->update(['profit' => $total - $totalCost]);
 
-           
-            if($paid>0 && in_array($data['payment_status'], ['paid', 'partial'])){
-                foreach($data['payments'] as $paymentData){
-                    $cashbox = \App\Models\Cashbox::find($paymentData['cashbox_id']);
-                    $this->cashboxService->addTransaction($cashbox->id,'in',$paymentData['amount'],'sales_invoice',$invoice->id,'تحصيل فاتورة بيع #' . $invoice->invoice_number);
+            /* ================= تنفيذ الدفعات ================= */
+            if ($paid > 0 && in_array($data['payment_status'], ['paid', 'partial'])) {
+
+                foreach ($data['payments'] as $payment) {
+
+                    // 🔹 الدفع من الخزنة
+                    if ($payment['method'] === 'cashbox') {
+
+                        $this->cashboxService->addTransaction(
+                            $payment['cashbox_id'],
+                            'in',
+                            $payment['amount'],
+                            'sales_invoice',
+                            $invoice->id,
+                            'تحصيل فاتورة بيع #' . $invoice->invoice_number
+                        );
+                    }
+
+                    // 🔹 الدفع من رصيد العميل
+                    if ($payment['method'] === 'customer_balance') {
+
+                        if (!$invoice->customer_id) {
+                            throw new \Exception('لا يمكن الدفع من رصيد بدون تحديد عميل');
+                        }
+
+                        $customer = Customer::lockForUpdate()->find($invoice->customer_id);
+
+                        if ($customer->balance < $payment['amount']) {
+                            throw new \Exception('رصيد العميل غير كافٍ');
+                        }
+
+                        $customer->decrement('balance', $payment['amount']);
+                    }
                 }
             }
 
-            if($invoice->customer_id){
+            /* ================= مديونية العميل ================= */
+            if ($invoice->customer_id) {
                 $customer = Customer::find($invoice->customer_id);
-                if($data['payment_status'] == 'due'){
-                    $customer->increment('debt',$total);
-                } elseif($remaining>0){
-                    $customer->increment('debt',$remaining);
+
+                if ($remaining > 0) {
+                    $customer->increment('debt', $remaining);
                 }
+
                 $customer->last_purchase_date = $data['invoice_date'];
                 $customer->save();
             }
 
             DB::commit();
-            return redirect()->route('admin.sales-invoices.index')->with('success','تم إنشاء فاتورة البيع بنجاح');
+            return redirect()
+                ->route('admin.sales-invoices.index')
+                ->with('success', 'تم إنشاء فاتورة البيع بنجاح');
 
-        } catch(\Exception $e){
+        } catch (\Exception $e) {
             DB::rollBack();
-            return back()->withErrors(['error'=>$e->getMessage()])->withInput();
+            return back()->withErrors(['error' => $e->getMessage()])->withInput();
         }
     }
+
 
 
 

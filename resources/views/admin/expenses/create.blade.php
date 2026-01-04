@@ -44,17 +44,22 @@
 
                             <div class="col-md-6">
                                 <label>الفئة *</label>
-                                <select name="category" class="form-select" required>
+                                <select name="category" id="categorySelect" class="form-select" required>
                                     <option value="">اختر الفئة</option>
-                                    <option value="electricity">كهرباء</option>
-                                    <option value="rent">إيجار</option>
-                                    <option value="salaries">مرتبات</option>
-                                    <option value="shipping">شحن</option>
-                                    <option value="maintenance">صيانة</option>
-                                    <option value="marketing">تسويق</option>
-                                    <option value="office">مكتب</option>
+
+                                    @foreach($categories as $category)
+                                        <option value="{{ $category }}">
+                                            {{ ucfirst(str_replace('_',' ', $category)) }}
+                                        </option>
+                                    @endforeach
+
+                                    <option value="add_new" class="text-primary">
+                                        إضافة فئة مصروف
+                                    </option>
                                 </select>
                             </div>
+
+
 
                             <div class="col-md-6">
                                 <label>المبلغ *</label>
@@ -94,7 +99,7 @@
                             </div>
 
                             <div class="col-md-6">
-                                <label>مرفق (اختياري)</label>
+                                <label>مرفق (اختياري)</labe l>
                                 <input type="file" name="attachment"
                                     class="form-control" accept="image/*">
                             </div>
@@ -119,4 +124,79 @@
         </div>
     </div>
 </div>
+
+<!-- Modal -->
+<div class="modal fade" id="addCategoryModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title">إضافة فئة مصروف</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+                <label>اسم الفئة</label>
+                <input type="text" id="newCategoryName" class="form-control"
+                    placeholder="مثال: إنترنت">
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    إلغاء
+                </button>
+                <button type="button" class="btn btn-primary" id="saveCategoryBtn">
+                    حفظ
+                </button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+    const categorySelect = document.getElementById('categorySelect');
+    const modal = new bootstrap.Modal(document.getElementById('addCategoryModal'));
+    const saveBtn = document.getElementById('saveCategoryBtn');
+
+    categorySelect.addEventListener('change', function () {
+        if (this.value === 'add_new') {
+            this.value = '';
+            modal.show();
+        }
+    });
+
+    saveBtn.addEventListener('click', function () {
+        const newCategory = document.getElementById('newCategoryName').value.trim();
+
+        if (!newCategory) {
+            alert('اكتب اسم الفئة');
+            return;
+        }
+
+        // تحويل الاسم لقيمة مناسبة (snake_case)
+        const value = newCategory
+            .toLowerCase()
+            .replace(/\s+/g, '_');
+
+        // إضافة option جديد
+        const option = document.createElement('option');
+        option.value = value;
+        option.textContent = newCategory;
+        option.selected = true;
+
+        // إضافته قبل "إضافة فئة مصروف"
+        categorySelect.insertBefore(option, categorySelect.lastElementChild);
+
+        // تفريغ input وقفل المودال
+        document.getElementById('newCategoryName').value = '';
+        modal.hide();
+    });
+
+});
+</script>
+
 @endsection

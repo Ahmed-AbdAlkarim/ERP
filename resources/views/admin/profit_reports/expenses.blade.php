@@ -113,7 +113,7 @@
                                     <td>{{ $expense->title }}</td>
                                     <td>{{ $expense->category }}</td>
                                     <td>{{ $expense->expense_date }}</td>
-                                    <td>{{ $expense->safe ? $expense->safe->name : 'غير محدد' }}</td>
+                                    <td>{{ $expense->cashbox ? $expense->cashbox->name : 'غير محدد' }}</td>
                                     <td>{{ number_format($expense->amount, 2) }} ج.م</td>
                                 </tr>
                             @empty
