@@ -30,9 +30,9 @@ class ProductApiController extends Controller
                     'name'  => $product->name,
                     'price' => $product->selling_price,
                     'type'  => $product->type,
-                    'image' => $product->image 
-                        ? asset('storage/' . $product->image)
-                        : null,
+                    'images'=> $product->image
+                        ? collect($product->image)->map(fn ($img) => asset('storage/' . $img))
+                        : [],
                 ];
             });
 

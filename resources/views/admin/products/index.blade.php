@@ -64,7 +64,9 @@
                         @forelse($products as $p)
                             <tr>
                                 <td>
-                                    @if($p->image)
+                                    @if($p->image && is_array($p->image) && count($p->image) > 0)
+                                        <img src="{{ asset('storage/'.$p->image[0]) }}" width="50">
+                                    @elseif($p->image && is_string($p->image))
                                         <img src="{{ asset('storage/'.$p->image) }}" width="50">
                                     @else
                                         —

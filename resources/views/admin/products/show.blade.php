@@ -6,12 +6,16 @@
 <div class="form-card stat-card p-4">
     <h4 class="mb-4 text-primary">عرض بيانات الصنف</h4>
 
-    {{-- صورة المنتج --}}
-    @if($product->image)
+    {{-- صور المنتج --}}
+    @if($product->image && is_array($product->image))
         <div class="text-center mb-4">
-            <img src="{{ asset('storage/'.$product->image) }}" 
-                 class="img-fluid rounded shadow"
-                 style="max-width: 250px">
+            <div class="d-flex flex-wrap justify-content-center gap-3">
+                @foreach($product->image as $img)
+                    <img src="{{ asset('storage/'.$img) }}"
+                         class="img-fluid rounded shadow"
+                         style="max-width: 200px">
+                @endforeach
+            </div>
         </div>
     @endif
 

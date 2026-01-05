@@ -132,12 +132,17 @@
 
         <hr class="my-4">
 
-        {{-- صورة المنتج --}}
-        <h5 class="section-title mb-3 text-secondary fw-bold">صورة المنتج</h5>
+        {{-- صور المنتج --}}
+        <h5 class="section-title mb-3 text-secondary fw-bold">صور المنتج</h5>
 
-        <div class="mb-3">
-            <input type="file" name="image" class="form-control rounded-3 shadow-sm">
+        <div id="images-container">
+            <div class="mb-3 image-input-group">
+                <input type="file" name="images[]" accept="image/*" class="form-control rounded-3 shadow-sm">
+                <button type="button" class="btn btn-danger btn-sm remove-image mt-2" style="display: none;">إزالة</button>
+            </div>
         </div>
+
+        <button type="button" id="add-image" class="btn btn-secondary btn-sm mb-3">إضافة صورة أخرى</button>
 
         {{-- ملاحظات --}}
         <h5 class="section-title mb-3 text-secondary fw-bold">ملاحظات</h5>
@@ -154,4 +159,40 @@
 
     </form>
 </div>
+
+<script>
+document.getElementById('add-image').addEventListener('click', function() {
+    const container = document.getElementById('images-container');
+    const newGroup = document.createElement('div');
+    newGroup.className = 'mb-3 image-input-group';
+    newGroup.innerHTML = `
+        <input type="file" name="images[]" accept="image/*" class="form-control rounded-3 shadow-sm">
+        <button type="button" class="btn btn-danger btn-sm remove-image mt-2">إزالة</button>
+    `;
+    container.appendChild(newGroup);
+    updateRemoveButtons();
+});
+
+function updateRemoveButtons() {
+    const groups = document.querySelectorAll('.image-input-group');
+    groups.forEach((group, index) => {
+        const removeBtn = group.querySelector('.remove-image');
+        if (groups.length > 1) {
+            removeBtn.style.display = 'inline-block';
+        } else {
+            removeBtn.style.display = 'none';
+        }
+    });
+}
+
+document.addEventListener('click', function(e) {
+    if (e.target.classList.contains('remove-image')) {
+        e.target.closest('.image-input-group').remove();
+        updateRemoveButtons();
+    }
+});
+
+// Initial update
+updateRemoveButtons();
+</script>
 @endsection

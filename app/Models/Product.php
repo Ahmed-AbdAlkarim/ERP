@@ -21,6 +21,7 @@ class Product extends Model
     protected $casts = [
         'stock' => 'integer',
         'reorder_level' => 'integer',
+        'image' => 'array',
     ];
 
     public function purchaseItems()

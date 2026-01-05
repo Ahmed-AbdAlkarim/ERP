@@ -41,14 +41,14 @@ class ProductController extends Controller
             'name'=>'required|string|max:255',
             'type'=>['required',Rule::in(['laptop','mobile','accessory','spare','service','security_camera','photo_camera'])],
             'model'=>'nullable|string|max:255',
-            'sku'=>'nullable|string|unique:products,sku', 
+            'sku'=>'nullable|string|unique:products,sku',
             'purchase_price'=>'required|numeric|min:0',
             'selling_price'=>'required|numeric|min:0',
             'min_allowed_price'=>'nullable|numeric|min:0',
             'warranty_type'=>'nullable|string|max:255',
             'warranty_period_days'=>'nullable|integer|min:0',
             'condition'=>['required',Rule::in(['new','used','imported'])],
-            'image'=>'nullable|image|max:2048',
+            'images.*'=>'nullable|image|max:2048',
             'stock'=>'required|integer|min:0',
             'reorder_level'=>'nullable|integer|min:0',
             'is_service'=>'boolean',
@@ -59,8 +59,12 @@ class ProductController extends Controller
             $data['sku'] = 'SKU-' . Str::upper(Str::random(8));
         }
 
-        if($r->hasFile('image')){
-            $data['image'] = $r->file('image')->store('products','public');
+        if($r->hasFile('images')){
+            $images = [];
+            foreach($r->file('images') as $file){
+                $images[] = $file->store('products','public');
+            }
+            $data['image'] = $images;
         }
 
         Product::create($data);
@@ -90,7 +94,7 @@ class ProductController extends Controller
             'warranty_type'=>'nullable|string|max:255',
             'warranty_period_days'=>'nullable|integer|min:0',
             'condition'=>['required',Rule::in(['new','used','imported'])],
-            'image'=>'nullable|image|max:2048',
+            'images.*'=>'nullable|image|max:2048',
             'stock'=>'required|integer|min:0',
             'reorder_level'=>'nullable|integer|min:0',
             'is_service'=>'boolean',
@@ -101,8 +105,12 @@ class ProductController extends Controller
             $data['sku'] = 'SKU-' . Str::upper(Str::random(8));
         }
 
-        if($r->hasFile('image')){
-            $data['image'] = $r->file('image')->store('products','public');
+        if($r->hasFile('images')){
+            $images = [];
+            foreach($r->file('images') as $file){
+                $images[] = $file->store('products','public');
+            }
+            $data['image'] = $images;
         }
 
         $product->update($data);

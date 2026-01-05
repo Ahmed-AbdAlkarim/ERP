@@ -134,19 +134,27 @@
 
         <hr>
 
-        <h5 class="text-primary fw-bold mb-3">الصورة</h5>
+        <h5 class="text-primary fw-bold mb-3">الصور</h5>
 
-        @if($product->image)
+        @if($product->image && is_array($product->image))
         <div class="mb-3">
-            <label class="form-label d-block">الصورة الحالية</label>
-            <img src="{{ asset('storage/' . $product->image) }}" width="120" class="rounded border shadow-sm mb-2">
+            <label class="form-label d-block">الصور الحالية</label>
+            <div class="d-flex flex-wrap gap-2">
+                @foreach($product->image as $img)
+                    <img src="{{ asset('storage/' . $img) }}" width="120" class="rounded border shadow-sm">
+                @endforeach
+            </div>
         </div>
         @endif
 
-        <div class="mb-3">
-            <label class="form-label">تغيير الصورة</label>
-            <input type="file" name="image" class="form-control">
+        <div id="images-container">
+            <div class="mb-3 image-input-group">
+                <input type="file" name="images[]" accept="image/*" class="form-control">
+                <button type="button" class="btn btn-danger btn-sm remove-image mt-2" style="display: none;">إزالة</button>
+            </div>
         </div>
+
+        <button type="button" id="add-image" class="btn btn-secondary btn-sm mb-3">إضافة صورة أخرى</button>
 
         <hr>
 
@@ -160,4 +168,40 @@
         </div>
     </form>
 </div>
+
+<script>
+document.getElementById('add-image').addEventListener('click', function() {
+    const container = document.getElementById('images-container');
+    const newGroup = document.createElement('div');
+    newGroup.className = 'mb-3 image-input-group';
+    newGroup.innerHTML = `
+        <input type="file" name="images[]" accept="image/*" class="form-control">
+        <button type="button" class="btn btn-danger btn-sm remove-image mt-2">إزالة</button>
+    `;
+    container.appendChild(newGroup);
+    updateRemoveButtons();
+});
+
+function updateRemoveButtons() {
+    const groups = document.querySelectorAll('.image-input-group');
+    groups.forEach((group, index) => {
+        const removeBtn = group.querySelector('.remove-image');
+        if (groups.length > 1) {
+            removeBtn.style.display = 'inline-block';
+        } else {
+            removeBtn.style.display = 'none';
+        }
+    });
+}
+
+document.addEventListener('click', function(e) {
+    if (e.target.classList.contains('remove-image')) {
+        e.target.closest('.image-input-group').remove();
+        updateRemoveButtons();
+    }
+});
+
+// Initial update
+updateRemoveButtons();
+</script>
 @endsection
