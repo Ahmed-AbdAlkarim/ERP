@@ -1,5 +1,19 @@
 <!-- Navbar -->
+<style>
+    .navbar-logo {
+        max-height: 40px;
+        width: auto;
+        object-fit: contain;
+        }
 
+        @media (max-width: 768px) {
+            .navbar-logo {
+                max-height: 32px;
+            }
+        }
+
+
+</style>
     <nav
             class="layout-navbar container-xxl navbar navbar-expand-xl navbar-detached align-items-center bg-navbar-theme"
             id="layout-navbar">
@@ -12,9 +26,14 @@
             <div class="container">
                 
 
-                <a class="navbar-brand ms-4" href="{{ url('/') }}">
-                    {{ config('app.name', 'Laravel') }}
+                <a class="navbar-brand ms-4 d-flex align-items-center" href="{{ url('/') }}">
+                    <img 
+                        src="{{ asset('assets/img/logo.png') }}" 
+                        alt="Click Store Logo"
+                        class="navbar-logo"
+                    >
                 </a>
+
 
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="{{ __('Toggle navigation') }}">
                     <span class="navbar-toggler-icon"></span>

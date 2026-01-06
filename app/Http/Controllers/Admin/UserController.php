@@ -93,6 +93,28 @@ class UserController extends Controller
     
     public function destroy(string $id)
     {
-        //
+        $user = User::findOrFail($id);
+
+        // ممنوع تحذف نفسك
+        if (auth()->id() == $user->id) {
+            return redirect()
+                ->route('admin.users.index')
+                ->with('error', 'لا يمكنك حذف المستخدم الحالي');
+        }
+
+        // فك الربط مع الأدوار والصلاحيات (مهم مع Spatie)
+        $user->roles()->detach();
+        $user->permissions()->detach();
+
+        $user->delete();
+
+        // تنظيف كاش الصلاحيات
+        $user->forgetCachedPermissions();
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
+
+        return redirect()
+            ->route('admin.users.index')
+            ->with('success', 'تم حذف المستخدم بنجاح');
     }
+
 }

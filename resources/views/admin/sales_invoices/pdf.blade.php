@@ -1,284 +1,253 @@
 <!doctype html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8">
-  <title>فاتورة - Click Store</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>
-    /* عام */
-    body {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: Tahoma, Arial, sans-serif;
-      background: #f5f5f5;
-      color: #000;
-      direction: rtl;
-    }
+<meta charset="UTF-8">
+<title>فاتورة - Click Store</title>
 
-    .page-wrapper {
-      width: 100%;
-      padding: 20px;
-    }
+<style>
+* {
+  box-sizing: border-box;
+}
 
-    .invoice-page {
-      width: 210mm;
-      min-height: 297mm;
-      margin: 0 auto;
-      background: #fff;
-      padding: 20mm;
-      box-sizing: border-box;
-      border: 3px solid #000;
-      position: relative;
-    }
+body {
+  margin: 0;
+  padding: 0;
+  font-family: Tahoma, Arial, sans-serif;
+  background: #f4f4f4;
+  direction: rtl;
+}
 
-    /* داخلية بسيطة بدل pseudo-element (mpdf أفضل بدون ::before في بعض الأحيان) */
-    .inner-border {
-      border: 1px solid #cccccc;
-      padding: 8mm;
-      height: 100%;
-      box-sizing: border-box;
-    }
+/* الصفحة نفسها */
+.page {
+  width: 210mm;
+  height: 297mm;           /* 🔴 مهم */
+  margin: 20px auto;
+  background: #fff;
+  border: 2px solid #000;  /* الإطار الحقيقي */
+  position: relative;
+  padding: 18mm 15mm 25mm; /* مساحة تحت لاسم المتجر */
+}
 
-    .invoice-header {
-      text-align: center;
-      margin-bottom: 20px;
-      padding-bottom: 10px;
-      border-bottom: 2px solid #000;
-    }
+/* اسم المتجر أسفل الإطار */
+.page-footer-name {
+  position: absolute;
+  bottom: 8mm;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 12px;
+  font-weight: bold;
+  background: #fff;
+  padding: 0 10px;
+}
 
-    .company-name {
-      font-size: 32px;
-      font-weight: 700;
-      margin: 0;
-    }
+/* ===== Header ===== */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
 
-    .invoice-info, .customer-info {
-      margin-top: 14px;
-      margin-bottom: 14px;
-      font-size: 14px;
-    }
+.logo {
+  font-size: 26px;
+  font-weight: bold;
+}
 
-    .info-row, .customer-row {
-      width: 100%;
-      overflow: hidden;
-      margin-bottom: 8px;
-    }
+.invoice-title {
+  font-size: 18px;
+  font-weight: bold;
+  border: 2px solid #000;
+  padding: 6px 16px;
+}
 
-    .info-label {
-      display: inline-block;
-      min-width: 140px;
-      font-weight: 700;
-      color: #000;
-    }
+/* ===== Info ===== */
+.info-section {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  font-size: 14px;
+}
 
-    .info-value {
-      display: inline-block;
-      color: #333;
-      border-bottom: 1px solid #ccc;
-      padding-bottom: 3px;
-      min-width: 200px;
-    }
+.info-box {
+  width: 48%;
+}
 
-    .section-divider {
-      height: 1px;
-      background: #cccccc;
-      margin: 14px 0;
-    }
+.info-box h3 {
+  font-size: 15px;
+  margin: 0 0 10px;
+  padding-bottom: 6px;
+  border-bottom: 2px solid #000;
+}
 
-    .items-table {
-      width: 100%;
-      border-collapse: collapse;
-      margin: 18px 0;
-      border: 1px solid #000;
-      font-size: 13px;
-    }
+.info-row {
+  display: flex;
+  margin-bottom: 6px;
+}
 
-    .items-table thead {
-      background: #e8e8e8;
-    }
+.info-row span:first-child {
+  width: 120px;
+  font-weight: bold;
+}
 
-    .items-table th {
-      padding: 10px;
-      text-align: center;
-      font-weight: 700;
-      border: 1px solid #000;
-    }
+/* ===== Table ===== */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
 
-    .items-table td {
-      padding: 8px;
-      text-align: center;
-      border: 1px solid #ccc;
-      color: #333;
-    }
+thead {
+  background: #000;
+  color: #fff;
+}
 
-    .totals-section {
-      margin-top: 18px;
-      width: 100%;
-    }
+th, td {
+  border: 1px solid #000;
+  padding: 8px;
+  text-align: center;
+}
 
-    .totals-box {
-      width: 360px;
-      border: 1px solid #000;
-      float: left;
-      background: #fff;
-      font-size: 14px;
-    }
+tbody tr:nth-child(even) {
+  background: #f7f7f7;
+}
 
-    .total-row {
-      padding: 10px 12px;
-      border-bottom: 1px solid #ccc;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
+/* ===== Totals ===== */
+.totals {
+  width: 40%;
+  margin-top: 20px;
+  margin-right: auto;
+  border: 2px solid #000;
+  font-size: 14px;
+}
 
-    .total-row.header {
-      background: #e8e8e8;
-      font-weight: 700;
-      border-bottom: 2px solid #000;
-    }
+.total-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px;
+  border-bottom: 1px solid #000;
+}
 
-    .final-total-row {
-      background: #f5f5f5;
-      font-weight: 700;
-      border-top: 2px solid #000;
-    }
+.total-row.final {
+  font-weight: bold;
+  background: #f0f0f0;
+  border-top: 2px solid #000;
+}
 
-    .total-label { font-weight: 700; color: #000; }
-    .total-value { font-weight: 700; color: #222; }
-
-    .invoice-footer {
-      clear: both;
-      margin-top: 40px;
-      text-align: center;
-      padding-top: 12px;
-      border-top: 2px solid #000;
-      font-size: 13px;
-    }
-
-    /* تحسين للـ print */
-    @media print {
-      body { background: #fff; }
-      .page-wrapper { padding: 0; }
-      .invoice-page { box-shadow: none; width: 100%; min-height: auto; }
-    }
-  </style>
+/* ===== Print ===== */
+@media print {
+  body {
+    background: #fff;
+  }
+  .page {
+    margin: 0;
+  }
+}
+</style>
 </head>
+
 <body>
-  <div class="page-wrapper">
-    <div class="invoice-page">
-      <div class="inner-border">
 
-        <!-- Header -->
-        <div class="invoice-header">
-          <h1 class="company-name">Click Store</h1>
-        </div>
+<div class="page">
 
-        <!-- Invoice Info -->
-        <div class="invoice-info">
-          <div class="info-row">
-            <span class="info-label">رقم الفاتورة:</span>
-            <span class="info-value">{{ $invoice->invoice_number }}</span>
-          </div>
+  <!-- Header -->
+  <div class="header">
+    <div class="logo">Click Store</div>
+    <div class="invoice-title">فاتورة بيع</div>
+  </div>
 
-          <div class="info-row">
-            <span class="info-label">التاريخ:</span>
-            <span class="info-value">
-              {{ $invoice->invoice_date instanceof \Carbon\Carbon ? $invoice->invoice_date->format('Y-m-d H:i') : $invoice->invoice_date }}
-            </span>
-          </div>
+  <!-- Info -->
+  <div class="info-section">
 
-          <div class="info-row">
-            <span class="info-label">الوقت:</span>
-            <span class="info-value">
-              {{ $invoice->invoice_date instanceof \Carbon\Carbon ? $invoice->invoice_date->format('h:i A') : '' }}
-            </span>
-          </div>
-        </div>
+    <div class="info-box">
+      <h3>بيانات الفاتورة</h3>
+      <div class="info-row">
+        <span>رقم الفاتورة:</span>
+        <span>{{ $invoice->invoice_number }}</span>
+      </div>
+      <div class="info-row">
+        <span>التاريخ:</span>
+        <span>
+          {{ $invoice->invoice_date instanceof \Carbon\Carbon ? $invoice->invoice_date->format('Y-m-d') : $invoice->invoice_date }}
+        </span>
+      </div>
+      <div class="info-row">
+        <span>الوقت:</span>
+        <span>
+          {{ $invoice->invoice_date instanceof \Carbon\Carbon ? $invoice->invoice_date->format('h:i A') : '' }}
+        </span>
+      </div>
+    </div>
 
-        <div class="section-divider"></div>
+    <div class="info-box">
+      <h3>بيانات العميل</h3>
+      <div class="info-row">
+        <span>اسم العميل:</span>
+        <span>{{ $invoice->customer->name ?? '-' }}</span>
+      </div>
+      <div class="info-row">
+        <span>الهاتف:</span>
+        <span>{{ $invoice->customer->phone ?? '-' }}</span>
+      </div>
+      <div class="info-row">
+        <span>العنوان:</span>
+        <span>{{ $invoice->customer->address ?? '-' }}</span>
+      </div>
+    </div>
 
-        <!-- Customer Info -->
-        <div class="customer-info">
-          <div class="customer-row">
-            <span class="info-label">اسم العميل:</span>
-            <span class="info-value">{{ $invoice->customer->name ?? '-' }}</span>
-          </div>
+  </div>
 
-          <div class="customer-row">
-            <span class="info-label">الهاتف:</span>
-            <span class="info-value">{{ $invoice->customer->phone ?? '-' }}</span>
-          </div>
+  <!-- Items -->
+  <table>
+    <thead>
+      <tr>
+        <th>المنتج</th>
+        <th>الكمية</th>
+        <th>سعر الوحدة</th>
+        <th>الإجمالي</th>
+      </tr>
+    </thead>
+    <tbody>
+      @foreach($invoice->items as $item)
+      <tr>
+        <td>{{ $item->product->name ?? '-' }}</td>
+        <td>{{ $item->qty }}</td>
+        <td>{{ number_format($item->price,2) }} ج.م</td>
+        <td>{{ number_format($item->total,2) }} ج.م</td>
+      </tr>
+      @endforeach
+    </tbody>
+  </table>
 
-          <div class="customer-row">
-            <span class="info-label">العنوان:</span>
-            <span class="info-value">{{ $invoice->customer->address ?? '-' }}</span>
-          </div>
-        </div>
+  <!-- Totals -->
+  <div class="totals">
+    <div class="total-row">
+      <span>المجموع الفرعي</span>
+      <span>{{ number_format($invoice->subtotal ?? 0,2) }} ج.م</span>
+    </div>
+    <div class="total-row">
+      <span>الخصم</span>
+      <span>- {{ number_format($invoice->discount ?? 0,2) }} ج.م</span>
+    </div>
+    <div class="total-row final">
+      <span>الإجمالي النهائي</span>
+      <span>{{ number_format($invoice->total ?? 0,2) }} ج.م</span>
+    </div>
+    <div class="total-row">
+      <span>المدفوع</span>
+      <span>{{ number_format($invoice->paid_amount ?? 0,2) }} ج.م</span>
+    </div>
+    <div class="total-row">
+      <span>المتبقي</span>
+      <span>
+        {{ number_format($invoice->remaining_amount ?? ($invoice->total - ($invoice->paid_amount ?? 0)),2) }} ج.م
+      </span>
+    </div>
+  </div>
 
-        <!-- Items Table -->
-        <table class="items-table" cellpadding="0" cellspacing="0">
-          <thead>
-            <tr>
-              <th>المنتج</th>
-              <th>الكمية</th>
-              <th>سعر الوحدة</th>
-              <th>الإجمالي</th>
-            </tr>
-          </thead>
-          <tbody>
-            @foreach($invoice->items as $item)
-              <tr>
-                <td>{{ $item->product->name ?? '-' }}</td>
-                <td>{{ $item->qty }}</td>
-                <td>{{ number_format($item->price, 2) }} ج.م</td>
-                <td>{{ number_format($item->total, 2) }} ج.م</td>
-              </tr>
-            @endforeach
-          </tbody>
-        </table>
+  <!-- Footer inside page -->
+  <div class="page-footer-name">Click Store</div>
 
-        <!-- Totals -->
-        <div class="totals-section">
-          <div class="totals-box">
-            <div class="total-row header">
-              <span class="total-label">المجموع الفرعي:</span>
-              <span class="total-value">{{ number_format($invoice->subtotal ?? 0, 2) }} ج.م</span>
-            </div>
+</div>
 
-            <div class="total-row">
-              <span class="total-label">الخصم:</span>
-              <span class="total-value">- {{ number_format($invoice->discount ?? 0, 2) }} ج.م</span>
-            </div>
-
-            <div class="total-row final-total-row">
-              <span class="total-label">الإجمالي النهائي:</span>
-              <span class="total-value">{{ number_format($invoice->total ?? 0, 2) }} ج.م</span>
-            </div>
-
-            <div class="total-row">
-              <span class="total-label">المبلغ المدفوع:</span>
-              <span class="total-value">{{ number_format($invoice->paid_amount ?? 0, 2) }} ج.م</span>
-            </div>
-
-            <div class="total-row">
-              <span class="total-label">المبلغ المتبقي:</span>
-              <span class="total-value">{{ number_format($invoice->remaining_amount ?? ($invoice->total - ($invoice->paid_amount ?? 0)), 2) }} ج.م</span>
-            </div>
-
-          </div> <!-- end totals-box -->
-
-          <div style="clear: both;"></div>
-        </div>
-
-        <!-- Footer -->
-        <div class="invoice-footer">
-          <p class="footer-text">شكراً لتعاملكم معنا — Click Store</p>
-        </div>
-
-      </div> <!-- end inner-border -->
-    </div> <!-- end invoice-page -->
-  </div> <!-- end page-wrapper -->
 </body>
 </html>

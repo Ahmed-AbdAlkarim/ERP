@@ -1,13 +1,45 @@
 <!-- Sidebar -->
 <aside id="layout-menu" class="layout-menu menu-vertical menu bg-menu-theme">
 
+<style>
+  .app-brand {
+    min-height: 70px;
+  }
+
+  .app-brand-link {
+    width: 100%;
+  }
+
+  .app-brand-logo {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .sidebar-logo {
+    max-height: 50px;
+    width: auto;
+    max-width: 100%;
+    object-fit: contain;
+  }
+
+  /* لما السايدبار تقفل */
+  .layout-menu-collapsed .sidebar-logo {
+    max-height: 32px;
+  }
+</style>
+
   <!-- Logo -->
-  <div class="app-brand demo">
+  <div class="app-brand demo px-3">
     <a href="{{ route('dashboard') }}" class="app-brand-link">
-      <span class="app-brand-logo demo">
-        
+      <span class="app-brand-logo">
+        <img 
+          src="{{ asset('assets/img/logo.png') }}" 
+          alt="Click Store Logo"
+          class="sidebar-logo"
+        >
       </span>
-      <span class="app-brand-text demo menu-text fw-bold">click store</span>
     </a>
 
     <a href="javascript:void(0);" class="layout-menu-toggle menu-link text-large ms-auto">
@@ -15,6 +47,8 @@
       <i class="ti ti-x d-block d-xl-none ti-sm align-middle"></i>
     </a>
   </div>
+
+
 
   <div class="menu-inner-shadow"></div>
 
