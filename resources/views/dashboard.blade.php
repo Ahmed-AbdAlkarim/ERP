@@ -51,7 +51,7 @@
                 </div>
             </div>
         </div>
-
+        @can('show_sales_invoice_profit')
         <!-- Profit -->
         <div class="col-xl-3 col-md-6 col-12">
             <a href="{{ route('admin.profit-reports.index') }}" class="text-decoration-none">
@@ -69,6 +69,7 @@
                 </div>
             </a>
         </div>
+        @endcan
 
         <!-- Invoices -->
         <div class="col-xl-3 col-md-6 col-12">
